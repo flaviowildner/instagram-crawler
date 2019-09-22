@@ -26,6 +26,8 @@ from .utils import instagram_int
 from .utils import randmized_sleep
 from .utils import retry
 
+from .database.postgres import connect
+
 
 class Logging(object):
     PREFIX = "instagram-crawler"
@@ -59,7 +61,56 @@ class Logging(object):
         self.logger.close()
 
 
-class InsCrawler(Logging):
+class Persist(Logging):
+    def __init__(self):
+        super().__init__()
+        self.db = connect()
+        if self.db is None:
+            return
+        self.createTables()
+
+    def createTables(self):
+        commands = [
+            """
+            CREATE TABLE IF NOT EXISTS profile
+            (
+                id serial NOT NULL,
+                username character varying(32),
+                name character varying(64),
+                description character varying(512),
+                n_followers integer,
+                n_following integer,
+                n_posts integer,
+                photo_url character varying(512),
+                last_visit bigint,
+                created_at bigint,
+                deleted boolean,
+                PRIMARY KEY (id)
+            )
+            """
+        ]
+        cur = self.db.cursor()
+        for command in commands:
+            cur.execute(command)
+        cur.close()
+        self.db.commit()
+
+    def persistProfile(self, username, name, description, n_followers, n_following, n_posts, photo_url, last_visit,
+                       created_at):
+        if self.db is None:
+            return
+        sql = """
+            INSERT INTO profile(username, name, description, n_followers, n_following, n_posts, photo_url, last_visit, created_at)
+            VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s);
+        """
+        cur = self.db.cursor()
+        cur.execute(sql, (username, name, description, n_followers, n_following, n_posts, photo_url, last_visit,
+                          created_at))
+        self.db.commit()
+        cur.close()
+
+
+class InsCrawler(Persist):
     URL = "https://www.instagram.com"
     RETRY_LIMIT = 10
 
@@ -101,6 +152,8 @@ class InsCrawler(Logging):
         photo = browser.find_one("._6q-tv")
         statistics = [ele.text for ele in browser.find(".g47SY")]
         post_num, follower_num, following_num = statistics
+        self.persistProfile(username, name.text, desc.text if desc else "", follower_num, following_num, post_num,
+                            photo.get_attribute("src"), 0, 0)
         return {
             "name": name.text,
             "desc": desc.text if desc else None,
@@ -133,6 +186,7 @@ class InsCrawler(Logging):
 
     def get_user_posts(self, username, number=None, detail=False):
         user_profile = self.get_user_profile(username)
+        print(user_profile)
         if not number:
             number = instagram_int(user_profile["post_num"])
 
@@ -230,9 +284,9 @@ class InsCrawler(Logging):
                 sys.stderr.write(
                     "\x1b[1;31m"
                     + "Failed to fetch the post: "
-                    + cur_key if isinstance(cur_key,str) else 'URL not fetched'
-                    + "\x1b[0m"
-                    + "\n"
+                    + cur_key if isinstance(cur_key, str) else 'URL not fetched'
+                                                               + "\x1b[0m"
+                                                               + "\n"
                 )
                 traceback.print_exc()
 
@@ -269,7 +323,7 @@ class InsCrawler(Logging):
             for ele in ele_posts:
                 key = ele.get_attribute("href")
                 if key not in key_set:
-                    dict_post = { "key": key }
+                    dict_post = {"key": key}
                     ele_img = browser.find_one(".KL4Bh img", ele)
                     dict_post["caption"] = ele_img.get_attribute("alt")
                     dict_post["img_url"] = ele_img.get_attribute("src")
