@@ -36,7 +36,8 @@ class Logging(object):
         try:
             timestamp = int(time.time())
             self.cleanup(timestamp)
-            self.logger = open("/tmp/%s-%s.log" % (Logging.PREFIX, timestamp), "w")
+            self.logger = open("/tmp/%s-%s.log" %
+                               (Logging.PREFIX, timestamp), "w")
             self.log_disable = False
         except Exception:
             self.log_disable = True
@@ -74,19 +75,38 @@ class Persist(Logging):
             """
             CREATE TABLE IF NOT EXISTS profile
             (
-                id serial NOT NULL,
-                username character varying(32),
-                name character varying(64),
-                description character varying(512),
-                n_followers integer,
-                n_following integer,
-                n_posts integer,
-                photo_url character varying(512),
-                last_visit bigint,
-                created_at bigint,
-                deleted boolean,
+                id SERIAL NOT NULL,
+                username TEXT NOT NULL,
+                name TEXT NOT NULL,
+                description TEXT,
+                n_followers INTEGER,
+                n_following INTEGER,
+                n_posts INTEGER,
+                photo_url TEXT,
+                last_visit BIGINT,
+                created_at BIGINT,
+                deleted BOOLEAN,
                 PRIMARY KEY (id)
-            )
+            );
+            CREATE TABLE IF NOT EXISTS post
+            (
+                id SERIAL NOT NULL,
+                id_profile INTEGER,
+                url TEXT,
+                post_date BIGINT,
+                caption TEXT,
+                last_visit BIGINT,
+                deleted BOOLEAN
+            );
+            CREATE TABLE IF NOT EXISTS comment
+            (
+                id SERIAL NOT NULL,
+                id_post INTEGER,
+                author INTEGER,
+                comment TEXT,
+                last_visit BIGINT,
+                deleted BOOLEAN
+            );
             """
         ]
         cur = self.db.cursor()
@@ -106,6 +126,31 @@ class Persist(Logging):
         cur = self.db.cursor()
         cur.execute(sql, (username, name, description, n_followers, n_following, n_posts, photo_url, last_visit,
                           created_at))
+        self.db.commit()
+        cur.close()
+
+    def persistPost(self, id_profile, url, post_date, caption, last_visit, deleted):
+        if self.db is None:
+            return
+        sql = """
+            INSERT INTO post(id_profile, url, post_date, caption, last_visit, deleted)
+            VALUES(%s, %s, %s, %s, %s, %s, %s);
+        """
+        cur = self.db.cursor()
+        cur.execute(sql, (id_profile, url, post_date,
+                          caption, last_visit, deleted))
+        self.db.commit()
+        cur.close()
+
+    def persistComment(self, id_post, author_id, comment, id_comment_reply, last_visit, deleted):
+        if self.db is None:
+            return
+        sql = """
+            INSERT INTO post(id_post, author_id, comment, last_visit, deleted)
+            VALUES(%s, %s, %s, %s, %s);
+        """
+        cur = self.db.cursor()
+        cur.execute(sql, (id_post, author_id, comment, last_visit, deleted))
         self.db.commit()
         cur.close()
 
@@ -168,7 +213,8 @@ class InsCrawler(Persist):
         url = "%s/%s/" % (InsCrawler.URL, username)
         browser.get(url)
         source = browser.driver.page_source
-        p = re.compile(r"window._sharedData = (?P<json>.*?);</script>", re.DOTALL)
+        p = re.compile(
+            r"window._sharedData = (?P<json>.*?);</script>", re.DOTALL)
         json_data = re.search(p, source).group("json")
         data = json.loads(json_data)
 
@@ -215,7 +261,8 @@ class InsCrawler(Persist):
         ele_post.click()
 
         for _ in range(maximum):
-            heart = browser.find_one(".dCJp8 .glyphsSpriteHeart__outline__24__grey_9")
+            heart = browser.find_one(
+                ".dCJp8 .glyphsSpriteHeart__outline__24__grey_9")
             if heart:
                 heart.click()
                 randmized_sleep(2)
@@ -272,21 +319,21 @@ class InsCrawler(Persist):
 
             except RetryException:
                 sys.stderr.write(
-                    "\x1b[1;31m"
-                    + "Failed to fetch the post: "
-                    + cur_key or 'URL not fetched'
-                    + "\x1b[0m"
-                    + "\n"
+                    "\x1b[1;31m" +
+                    "Failed to fetch the post: " +
+                    cur_key or 'URL not fetched' +
+                    "\x1b[0m" +
+                    "\n"
                 )
                 break
 
             except Exception:
                 sys.stderr.write(
-                    "\x1b[1;31m"
-                    + "Failed to fetch the post: "
-                    + cur_key if isinstance(cur_key, str) else 'URL not fetched'
-                                                               + "\x1b[0m"
-                                                               + "\n"
+                    "\x1b[1;31m" +
+                    "Failed to fetch the post: " +
+                    cur_key if isinstance(cur_key, str) else 'URL not fetched' +
+                                                               "\x1b[0m" +
+                                                               "\n"
                 )
                 traceback.print_exc()
 
