@@ -5,6 +5,7 @@ import argparse
 import json
 import sys
 from io import open
+from datetime import datetime
 
 from inscrawler import InsCrawler
 from inscrawler.settings import override_settings
@@ -30,7 +31,10 @@ def get_posts_by_user(username, number, detail, debug):
 
 def get_profile(username):
     ins_crawler = InsCrawler()
-    return ins_crawler.get_user_profile(username)
+    profile = ins_crawler.get_user_profile(username)
+    ins_crawler.persistProfile(username, profile.name, profile.desc, profile.follower_num, profile.following,
+                               profile.post_num, profile.photo_url, int(datetime.now().timestamp()), int(datetime.now().timestamp()))
+    return profile
 
 
 def get_profile_from_script(username):
@@ -60,11 +64,13 @@ def output(data, filepath):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Instagram Crawler", usage=usage())
+    parser = argparse.ArgumentParser(
+        description="Instagram Crawler", usage=usage())
     parser.add_argument(
         "mode", help="options: [posts, posts_full, profile, profile_script, hashtag]"
     )
-    parser.add_argument("-n", "--number", type=int, help="number of returned posts")
+    parser.add_argument("-n", "--number", type=int,
+                        help="number of returned posts")
     parser.add_argument("-u", "--username", help="instagram's username")
     parser.add_argument("-t", "--tag", help="instagram's tag name")
     parser.add_argument("-o", "--output", help="output file name(json format)")
@@ -93,7 +99,8 @@ if __name__ == "__main__":
     elif args.mode == "hashtag":
         arg_required("tag")
         output(
-            get_posts_by_hashtag(args.tag, args.number or 100, args.debug), args.output
+            get_posts_by_hashtag(
+                args.tag, args.number or 100, args.debug), args.output
         )
     else:
         usage()

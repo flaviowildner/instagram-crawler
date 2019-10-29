@@ -9,6 +9,8 @@ import time
 import traceback
 from builtins import open
 from time import sleep
+from datetime import datetime
+import dateutil.parser
 
 from tqdm import tqdm
 
@@ -76,7 +78,7 @@ class Persist(Logging):
             CREATE TABLE IF NOT EXISTS profile
             (
                 id SERIAL NOT NULL,
-                username TEXT NOT NULL,
+                username TEXT NOT NULL UNIQUE,
                 name TEXT NOT NULL,
                 description TEXT,
                 n_followers INTEGER,
@@ -91,21 +93,24 @@ class Persist(Logging):
             CREATE TABLE IF NOT EXISTS post
             (
                 id SERIAL NOT NULL,
-                id_profile INTEGER,
+                id_profile INTEGER REFERENCES profile(id),
                 url TEXT,
+                url_imgs TEXT,
                 post_date BIGINT,
                 caption TEXT,
                 last_visit BIGINT,
-                deleted BOOLEAN
+                deleted BOOLEAN,
+                PRIMARY KEY (id)
             );
             CREATE TABLE IF NOT EXISTS comment
             (
                 id SERIAL NOT NULL,
-                id_post INTEGER,
-                author INTEGER,
+                id_post INTEGER REFERENCES post(id),
+                author INTEGER REFERENCES profile(id),
                 comment TEXT,
                 last_visit BIGINT,
-                deleted BOOLEAN
+                deleted BOOLEAN,
+                PRIMARY KEY (id)
             );
             """
         ]
@@ -114,6 +119,26 @@ class Persist(Logging):
             cur.execute(command)
         cur.close()
         self.db.commit()
+
+    def getUserIdByUsername(self, username):
+        if self.db is None:
+            return
+
+        sql = """
+            SELECT id FROM profile WHERE username = '%s';
+        """ % (username)
+
+        cur = self.db.cursor()
+        cur.execute(sql)
+        ids_profile = cur.fetchall()
+        if len(ids_profile) > 0:
+            id_profile = ids_profile[0]
+        else:
+            id_profile = None
+
+        cur.close()
+
+        return id_profile
 
     def persistProfile(self, username, name, description, n_followers, n_following, n_posts, photo_url, last_visit,
                        created_at):
@@ -129,15 +154,15 @@ class Persist(Logging):
         self.db.commit()
         cur.close()
 
-    def persistPost(self, id_profile, url, post_date, caption, last_visit, deleted):
+    def persistPost(self, id_profile, url, url_imgs, post_date, caption, last_visit, deleted):
         if self.db is None:
             return
         sql = """
-            INSERT INTO post(id_profile, url, post_date, caption, last_visit, deleted)
+            INSERT INTO post(id_profile, url, url_imgs, post_date, caption, last_visit, deleted)
             VALUES(%s, %s, %s, %s, %s, %s, %s);
         """
         cur = self.db.cursor()
-        cur.execute(sql, (id_profile, url, post_date,
+        cur.execute(sql, (id_profile, url, url_imgs, post_date,
                           caption, last_visit, deleted))
         self.db.commit()
         cur.close()
@@ -195,10 +220,13 @@ class InsCrawler(Persist):
         name = browser.find_one(".rhpdm")
         desc = browser.find_one(".-vDIg span")
         photo = browser.find_one("._6q-tv")
-        statistics = [ele.text for ele in browser.find(".g47SY")]
-        post_num, follower_num, following_num = statistics
-        self.persistProfile(username, name.text, desc.text if desc else "", follower_num, following_num, post_num,
-                            photo.get_attribute("src"), 0, 0)
+
+        statistics = browser.find(".g47SY")
+
+        post_num = statistics[0].text.replace(",", "")
+        follower_num = statistics[1].get_attribute("title").replace(",", "")
+        following_num = statistics[2].text.replace(",", "")
+
         return {
             "name": name.text,
             "desc": desc.text if desc else None,
@@ -239,7 +267,7 @@ class InsCrawler(Persist):
         self._dismiss_login_prompt()
 
         if detail:
-            return self._get_posts_full(number)
+            return self._get_posts_full(username, number)
         else:
             return self._get_posts(number)
 
@@ -274,7 +302,7 @@ class InsCrawler(Persist):
             else:
                 break
 
-    def _get_posts_full(self, num):
+    def _get_posts_full(self, username, num):
         @retry()
         def check_next_post(cur_key):
             ele_a_datetime = browser.find_one(".eo2As .c-Yi7")
@@ -349,6 +377,16 @@ class InsCrawler(Persist):
         posts = list(dict_posts.values())
         if posts:
             posts.sort(key=lambda post: post["datetime"], reverse=True)
+
+        id_profile = self.getUserIdByUsername(username)
+        if id_profile is None:
+            raise Exception('The profile of specified username does not exist')
+
+        for post in posts:
+            d = dateutil.parser.parse(post['datetime'])
+            self.persistPost(id_profile, post['key'], ",".join(post['img_urls']), int(
+                d.timestamp()), post['caption'], int(datetime.now().timestamp()), False)
+
         return posts
 
     def _get_posts(self, num):
