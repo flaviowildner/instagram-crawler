@@ -33,9 +33,6 @@ def get_posts_by_user(username, number, detail, debug):
 
 def get_profile(username):
     ins_crawler = InsCrawler()
-    # profile = ins_crawler.get_user_profile(username)
-    # ins_crawler.persistProfile(username, profile.name, profile.desc, profile.follower_num, profile.following,
-    #                            profile.post_num, profile.photo_url, int(datetime.now().timestamp()), int(datetime.now().timestamp()))
     return ins_crawler.get_user_profile(username)
 
 
