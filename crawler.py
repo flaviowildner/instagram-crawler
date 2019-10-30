@@ -11,6 +11,8 @@ from inscrawler import InsCrawler
 from inscrawler.settings import override_settings
 from inscrawler.settings import prepare_override_settings
 
+from inscrawler.persist import Persist
+import dateutil.parser
 
 def usage():
     return """
@@ -31,10 +33,10 @@ def get_posts_by_user(username, number, detail, debug):
 
 def get_profile(username):
     ins_crawler = InsCrawler()
-    profile = ins_crawler.get_user_profile(username)
-    ins_crawler.persistProfile(username, profile.name, profile.desc, profile.follower_num, profile.following,
-                               profile.post_num, profile.photo_url, int(datetime.now().timestamp()), int(datetime.now().timestamp()))
-    return profile
+    # profile = ins_crawler.get_user_profile(username)
+    # ins_crawler.persistProfile(username, profile.name, profile.desc, profile.follower_num, profile.following,
+    #                            profile.post_num, profile.photo_url, int(datetime.now().timestamp()), int(datetime.now().timestamp()))
+    return ins_crawler.get_user_profile(username)
 
 
 def get_profile_from_script(username):
@@ -84,15 +86,31 @@ if __name__ == "__main__":
 
     if args.mode in ["posts", "posts_full"]:
         arg_required("username")
-        output(
-            get_posts_by_user(
+        posts =  get_posts_by_user(
                 args.username, args.number, args.mode == "posts_full", args.debug
-            ),
-            args.output,
-        )
+            )
+        persist = Persist()
+        id_profile = persist.getUserIdByUsername(args.username)
+
+        if id_profile is None:
+            raise Exception('The profile of specified username does not exist')
+
+        for post in posts:
+            d = dateutil.parser.parse(post['datetime'])
+            persist.persistPost(id_profile, post['key'], ",".join(post['img_urls']), int(
+                d.timestamp()), post['caption'], int(datetime.now().timestamp()), False)
+
+        output( posts, args.output,)
+
+
     elif args.mode == "profile":
         arg_required("username")
-        output(get_profile(args.username), args.output)
+        profile = get_profile(args.username)
+        output(profile, args.output)
+        persist = Persist()
+        profile["username"] = args.username
+        persist.persistProfile(profile)
+        
     elif args.mode == "profile_script":
         arg_required("username")
         output(get_profile_from_script(args.username), args.output)
