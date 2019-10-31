@@ -14,6 +14,7 @@ from inscrawler.settings import prepare_override_settings
 from inscrawler.persist import Persist
 import dateutil.parser
 
+
 def usage():
     return """
         python crawler.py posts -u cal_foodie -n 100 -o ./output
@@ -83,9 +84,9 @@ if __name__ == "__main__":
 
     if args.mode in ["posts", "posts_full"]:
         arg_required("username")
-        posts =  get_posts_by_user(
-                args.username, args.number, args.mode == "posts_full", args.debug
-            )
+        posts = get_posts_by_user(
+            args.username, args.number, args.mode == "posts_full", args.debug
+        )
         persist = Persist()
         id_profile = persist.getUserIdByUsername(args.username)
 
@@ -93,12 +94,10 @@ if __name__ == "__main__":
             raise Exception('The profile of specified username does not exist')
 
         for post in posts:
-            d = dateutil.parser.parse(post['datetime'])
-            persist.persistPost(id_profile, post['key'], ",".join(post['img_urls']), int(
-                d.timestamp()), post['caption'], int(datetime.now().timestamp()), False)
+            post['id_profile'] = id_profile
+            persist.persistPost(post)
 
-        output( posts, args.output,)
-
+        output(posts, args.output,)
 
     elif args.mode == "profile":
         arg_required("username")
@@ -107,7 +106,7 @@ if __name__ == "__main__":
         persist = Persist()
         profile["username"] = args.username
         persist.persistProfile(profile)
-        
+
     elif args.mode == "profile_script":
         arg_required("username")
         output(get_profile_from_script(args.username), args.output)

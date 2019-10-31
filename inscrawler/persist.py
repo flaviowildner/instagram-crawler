@@ -1,5 +1,6 @@
 from .database.postgres import connect
 from datetime import datetime
+import dateutil.parser
 
 
 class Persist():
@@ -91,10 +92,7 @@ class Persist():
         self.db.commit()
         cur.close()
 
-# username, profile.name, profile.desc, profile.follower_num, profile.following,
-        #    profile.post_num, profile.photo_url, int(datetime.now().timestamp()), int(datetime.now().timestamp())
-
-    def persistPost(self, id_profile, url, url_imgs, post_date, caption, last_visit, deleted):
+    def persistPost(self, post):
         if self.db is None:
             return
         sql = """
@@ -102,8 +100,9 @@ class Persist():
             VALUES(%s, %s, %s, %s, %s, %s, %s);
         """
         cur = self.db.cursor()
-        cur.execute(sql, (id_profile, url, url_imgs, post_date,
-                          caption, last_visit, deleted))
+
+        cur.execute(sql, (post['id_profile'], post['key'], ",".join(post['img_urls']), int(dateutil.parser.parse(post['datetime']).timestamp()),
+                          post['caption'], int(datetime.now().timestamp()), False))
         self.db.commit()
         cur.close()
 
