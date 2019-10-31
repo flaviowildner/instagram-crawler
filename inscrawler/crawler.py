@@ -103,7 +103,9 @@ class InsCrawler(Logging):
         browser.get(url)
         name = browser.find_one(".rhpdm")
         desc = browser.find_one(".-vDIg span")
-        photo = browser.find_one("._6q-tv")
+        photo = browser.find_one("._6q-tv") # Class for public profiles
+        #TODO
+        #Get photo for private profile by using 'be6sR' class
 
         statistics = browser.find(".g47SY")
 
@@ -114,7 +116,7 @@ class InsCrawler(Logging):
         return {
             "name": name.text,
             "desc": desc.text if desc else None,
-            "photo_url": photo.get_attribute("src"),
+            "photo_url": photo.get_attribute("src") if photo else None,
             "post_num": post_num,
             "follower_num": follower_num,
             "following_num": following_num,
@@ -261,15 +263,6 @@ class InsCrawler(Logging):
         posts = list(dict_posts.values())
         if posts:
             posts.sort(key=lambda post: post["datetime"], reverse=True)
-
-        # id_profile = self.getUserIdByUsername(username)
-        # if id_profile is None:
-        #     raise Exception('The profile of specified username does not exist')
-
-        # for post in posts:
-        #     d = dateutil.parser.parse(post['datetime'])
-        #     self.persistPost(id_profile, post['key'], ",".join(post['img_urls']), int(
-        #         d.timestamp()), post['caption'], int(datetime.now().timestamp()), False)
 
         return posts
 

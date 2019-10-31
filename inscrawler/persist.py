@@ -45,7 +45,7 @@ class Persist():
             (
                 id SERIAL NOT NULL,
                 id_post INTEGER REFERENCES post(id),
-                author INTEGER REFERENCES profile(id),
+                id_author INTEGER REFERENCES profile(id),
                 comment TEXT,
                 last_visit BIGINT,
                 deleted BOOLEAN,
@@ -71,13 +71,33 @@ class Persist():
         cur.execute(sql)
         ids_profile = cur.fetchall()
         if len(ids_profile) > 0:
-            id_profile = ids_profile[0]
+            id_profile = ids_profile[0][0]
         else:
             id_profile = None
 
         cur.close()
 
         return id_profile
+
+    def getPostIdByUrl(self, url):
+        if self.db is None:
+            return
+
+        sql = """
+            SELECT id FROM post WHERE url = '%s';
+        """ % (url)
+
+        cur = self.db.cursor()
+        cur.execute(sql)
+        ids_post = cur.fetchall()
+        if len(ids_post) > 0:
+            id_post = ids_post[0][0]
+        else:
+            id_post = None
+
+        cur.close()
+
+        return id_post
 
     def persistProfile(self, profile):
         if self.db is None:
@@ -106,14 +126,15 @@ class Persist():
         self.db.commit()
         cur.close()
 
-    def persistComment(self, id_post, author_id, comment, id_comment_reply, last_visit, deleted):
+    def persistComment(self, comment, id_comment_reply):
         if self.db is None:
             return
         sql = """
-            INSERT INTO post(id_post, author_id, comment, last_visit, deleted)
+            INSERT INTO comment(id_post, id_author, comment, last_visit, deleted)
             VALUES(%s, %s, %s, %s, %s);
         """
         cur = self.db.cursor()
-        cur.execute(sql, (id_post, author_id, comment, last_visit, deleted))
+        cur.execute(sql, (comment['id_post'], comment['id_author'], comment['comment'], int(
+            datetime.now().timestamp()), False))
         self.db.commit()
         cur.close()
