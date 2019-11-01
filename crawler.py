@@ -115,6 +115,23 @@ if __name__ == "__main__":
                     raise Exception('The specified post does not exist')
                 persist.persistComment(comment, None)
 
+            for liker in post['likers'] if 'likers' in post.keys() else []:
+                id_profile = persist.getUserIdByUsername(liker)
+                if id_profile is None:
+                    profile = get_profile(liker)
+                    profile['username'] = liker
+                    persist.persistProfile(profile)
+                    id_profile = persist.getUserIdByUsername(liker)
+
+                id_post = persist.getPostIdByUrl(post['key'])
+
+                if id_post is None:
+                    raise Exception('The specified post does not exist')
+
+                persist.persistLikeOnPost(id_profile, id_post)
+
+
+
         output(posts, args.output,)
 
     elif args.mode == "profile":

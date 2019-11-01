@@ -18,7 +18,7 @@ class Persist():
             (
                 id SERIAL NOT NULL,
                 username TEXT NOT NULL UNIQUE,
-                name TEXT NOT NULL,
+                name TEXT,
                 description TEXT,
                 n_followers INTEGER,
                 n_following INTEGER,
@@ -50,6 +50,15 @@ class Persist():
                 last_visit BIGINT,
                 deleted BOOLEAN,
                 PRIMARY KEY (id)
+            );
+            CREATE TABLE IF NOT EXISTS like_on_post
+            (
+                id_profile INTEGER REFERENCES profile(id),
+                id_post INTEGER REFERENCES post(id),
+                last_visit BIGINT,
+                created_at BIGINT,
+                deleted BOOLEAN,
+                PRIMARY KEY (id_profile,id_post)
             );
             """
         ]
@@ -136,5 +145,18 @@ class Persist():
         cur = self.db.cursor()
         cur.execute(sql, (comment['id_post'], comment['id_author'], comment['comment'], int(
             datetime.now().timestamp()), False))
+        self.db.commit()
+        cur.close()
+
+    def persistLikeOnPost(self, id_profile, id_post):
+        if self.db is None:
+            return
+        sql = """
+            INSERT INTO like_on_post(id_profile, id_post, created_at, last_visit, deleted)
+            VALUES(%s, %s, %s, %s, %s);
+        """
+        cur = self.db.cursor()
+        cur.execute(sql, (id_profile, id_post, int(
+            datetime.now().timestamp()), int(datetime.now().timestamp()), False))
         self.db.commit()
         cur.close()
