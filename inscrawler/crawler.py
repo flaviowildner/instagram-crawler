@@ -114,7 +114,7 @@ class InsCrawler(Logging):
         following_num = statistics[2].text.replace(",", "")
 
         return {
-            "name": name.text,
+            "name": name.text if name else None,
             "desc": desc.text if desc else None,
             "photo_url": photo.get_attribute("src") if photo else None,
             "post_num": post_num,
