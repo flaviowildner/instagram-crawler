@@ -96,7 +96,8 @@ if __name__ == "__main__":
         for post in posts:
             post['id_profile'] = id_profile
             persist.persistPost(post)
-            for comment in post['comments']:
+
+            for comment in post['comments'] if 'comments' in post.keys() else []:
                 author = comment['author']
                 id_profile = persist.getUserIdByUsername(author)
                 if id_profile is None:

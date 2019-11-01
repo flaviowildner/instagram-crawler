@@ -87,7 +87,7 @@ def fetch_likes_plays(browser, dict_post):
 def fetch_likers(browser, dict_post):
     if not settings.fetch_likers:
         return
-    like_info_btn = browser.find_one(".EDfFK ._0mzm-.sqdOP")
+    like_info_btn = browser.find_one(".EDfFK .sqdOP._8A5w5")
     like_info_btn.click()
 
     likers = {}
