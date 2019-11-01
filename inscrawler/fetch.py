@@ -2,7 +2,8 @@ import re
 from time import sleep
 
 from .settings import settings
-
+from .utils import retry
+from .exceptions import RetryException
 
 def get_parsed_mentions(raw_text):
     regex = re.compile(r"@([\w\.]+)")
@@ -131,6 +132,14 @@ def fetch_comments(browser, dict_post):
     if not settings.fetch_comments:
         return
 
+    @retry()
+    def check_next_likers():
+        ele_a_datetime = browser.find_one(".eo2As .c-Yi7")
+
+        # It takes time to load the post for some users with slow network
+        if ele_a_datetime is None:
+            raise RetryException()
+
     show_more_selector = "button .glyphsSpriteCircle_add__outline__24__grey_9"
     show_more = browser.find_one(show_more_selector)
     while show_more:
@@ -150,6 +159,32 @@ def fetch_comments(browser, dict_post):
     for els_comment in ele_comments[1:]:
         author = browser.find_one(".FPmhX", els_comment).text
 
+        likers_list = []
+
+        likers_btn = browser.find_one('._7UhW9 button', els_comment)
+        if 'like' in likers_btn.text:
+            likers_btn.click()
+
+            likers = {}
+            liker_elems_css_selector = ".Igw0E ._7UhW9.xLCgt a"
+            likers_elems = list(browser.find(liker_elems_css_selector))
+            last_liker = None
+            while likers_elems:
+                for ele in likers_elems:
+                    likers[ele.get_attribute("href")] = ele.get_attribute("title")
+
+                if last_liker == likers_elems[-1]:
+                    break
+
+                last_liker = likers_elems[-1]
+                last_liker.location_once_scrolled_into_view
+                sleep(0.6)
+                likers_elems = list(browser.find(liker_elems_css_selector))
+
+            likers_list = list(likers.values())
+            close_btn = browser.find_one(".WaOAr button")
+            close_btn.click()
+
         temp_element = browser.find("span", els_comment)
 
         for element in temp_element:
@@ -157,7 +192,7 @@ def fetch_comments(browser, dict_post):
             if element.text not in ['Verified','']:
                 comment = element.text
 
-        comment_obj = {"author": author, "comment": comment}
+        comment_obj = {"author": author, "comment": comment, "likers": likers_list}
 
         fetch_mentions(comment, comment_obj)
         fetch_hashtags(comment, comment_obj)

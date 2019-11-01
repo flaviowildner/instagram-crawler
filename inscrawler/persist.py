@@ -51,6 +51,15 @@ class Persist():
                 deleted BOOLEAN,
                 PRIMARY KEY (id)
             );
+            CREATE TABLE IF NOT EXISTS like_on_comment
+            (
+                id_profile INTEGER REFERENCES profile(id),
+                id_comment INTEGER REFERENCES comment(id),
+                created_at BIGINT,
+                last_visit BIGINT,
+                deleted BOOLEAN,
+                PRIMARY KEY (id_profile, id_comment)
+            );
             """
         ]
         cur = self.db.cursor()
@@ -136,5 +145,17 @@ class Persist():
         cur = self.db.cursor()
         cur.execute(sql, (comment['id_post'], comment['id_author'], comment['comment'], int(
             datetime.now().timestamp()), False))
+        self.db.commit()
+        cur.close()
+
+    def persistLikeOnComment(self, id_profile, id_comment):
+        if self.db is None:
+            return
+        sql = """
+            INSERT INTO like_on_comment(id_profile, id_comment, created_at, last_visit, deleted)
+            VALUES(%s, %s, %s, %s, %s);
+        """
+        cur = self.db.cursor()
+        cur.execute(sql, (id_profile, id_comment, int(datetime.now()), False))
         self.db.commit()
         cur.close()

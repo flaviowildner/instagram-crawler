@@ -29,6 +29,7 @@ def usage():
 
 def get_posts_by_user(username, number, detail, debug):
     ins_crawler = InsCrawler(has_screen=debug)
+    ins_crawler.login()
     return ins_crawler.get_user_posts(username, number, detail)
 
 
@@ -82,7 +83,7 @@ if __name__ == "__main__":
 
     override_settings(args)
 
-    if args.mode in ["posts", "posts_full"]:
+    if args.mode in ["posts", "posts_full"]:        
         arg_required("username")
         posts = get_posts_by_user(
             args.username, args.number, args.mode == "posts_full", args.debug
