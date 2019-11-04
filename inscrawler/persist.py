@@ -97,6 +97,20 @@ class Persist():
 
         return id_profile
 
+    def getNextSequenceId(self, sequence):
+        if self.db is None:
+            return
+
+        sql = """
+            SELECT nextval('%s')
+        """ %(sequence)
+
+        cur = self.db.cursor()
+        cur.execute(sql)
+        id = cur.fetchone()[0]
+        cur.close()
+        return id
+
     def getPostIdByUrl(self, url):
         if self.db is None:
             return
@@ -144,16 +158,25 @@ class Persist():
         self.db.commit()
         cur.close()
 
-    def persistComment(self, comment, id_comment_reply):
+    def persistComment(self, comment, id_comment_reply, id=None):
         if self.db is None:
             return
-        sql = """
-            INSERT INTO comment(id_post, id_author, comment, last_visit, deleted)
-            VALUES(%s, %s, %s, %s, %s);
-        """
         cur = self.db.cursor()
-        cur.execute(sql, (comment['id_post'], comment['id_author'], comment['comment'], int(
+        if id is None:
+            sql = """
+                INSERT INTO comment(id_post, id_author, comment, last_visit, deleted)
+                VALUES(%s, %s, %s, %s, %s);
+            """
+            cur.execute(sql, (comment['id_post'], comment['id_author'], comment['comment'], int(
             datetime.now().timestamp()), False))
+        else:
+            sql = """
+                INSERT INTO comment(id, id_post, id_author, comment, last_visit, deleted)
+                VALUES(%s, %s, %s, %s, %s, %s);
+            """
+            cur.execute(sql, (id, comment['id_post'], comment['id_author'], comment['comment'], int(
+            datetime.now().timestamp()), False))
+
         self.db.commit()
         cur.close()
 
@@ -165,7 +188,9 @@ class Persist():
             VALUES(%s, %s, %s, %s, %s);
         """
         cur = self.db.cursor()
-        cur.execute(sql, (id_profile, id_comment, int(datetime.now()), False))
+        cur.execute(sql, (id_profile, id_comment, int(datetime.now().timestamp()), int(datetime.now().timestamp()), False))
+        self.db.commit()
+        cur.close()
 
     def persistLikeOnPost(self, id_profile, id_post):
         if self.db is None:

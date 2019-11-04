@@ -83,7 +83,7 @@ if __name__ == "__main__":
 
     override_settings(args)
 
-    if args.mode in ["posts", "posts_full"]:        
+    if args.mode in ["posts", "posts_full"]:
         arg_required("username")
         posts = get_posts_by_user(
             args.username, args.number, args.mode == "posts_full", args.debug
@@ -114,7 +114,19 @@ if __name__ == "__main__":
 
                 if id_post is None:
                     raise Exception('The specified post does not exist')
-                persist.persistComment(comment, None)
+
+                id_comment = persist.getNextSequenceId('comment_id_seq')
+                persist.persistComment(comment, None, id_comment)
+
+                for liker in comment['likers'] if 'likers' in comment.keys() else []:
+                    id_profile = persist.getUserIdByUsername(liker)
+                    if id_profile is None:
+                        profile = get_profile(liker)
+                        profile['username'] = liker
+                        persist.persistProfile(profile)
+                        id_profile = persist.getUserIdByUsername(liker)
+
+                    persist.persistLikeOnComment(id_profile, id_comment)
 
             for liker in post['likers'] if 'likers' in post.keys() else []:
                 id_profile = persist.getUserIdByUsername(liker)
@@ -130,8 +142,6 @@ if __name__ == "__main__":
                     raise Exception('The specified post does not exist')
 
                 persist.persistLikeOnPost(id_profile, id_post)
-
-
 
         output(posts, args.output,)
 
