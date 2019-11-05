@@ -33,8 +33,9 @@ def get_posts_by_user(username, number, detail, debug):
     return ins_crawler.get_user_posts(username, number, detail)
 
 
-def get_profile(username):
-    ins_crawler = InsCrawler()
+def get_profile(username, debug):
+    ins_crawler = InsCrawler(has_screen=debug)
+    ins_crawler.login()
     return ins_crawler.get_user_profile(username)
 
 
@@ -147,7 +148,7 @@ if __name__ == "__main__":
 
     elif args.mode == "profile":
         arg_required("username")
-        profile = get_profile(args.username)
+        profile = get_profile(args.username, args.debug)
         print(profile)
         output(profile, args.output)
         persist = Persist()

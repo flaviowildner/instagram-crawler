@@ -78,7 +78,6 @@ class Persist():
                 deleted BOOLEAN,
                 PRIMARY KEY (id_followed,id_follower)
             );
-
             """
         ]
         cur = self.db.cursor()

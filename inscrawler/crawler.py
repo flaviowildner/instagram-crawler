@@ -116,26 +116,33 @@ class InsCrawler(Logging):
         following_btn = statistics[1]
         following_btn.click()
 
+        # scrollar até o final da lista de seguidores para assim gerar uma única vez a lista pelo find.
+        # Utilizar o document.querySelector(".wo9IH:first-child") para obter o último filho do scroll.
+        # Após isso realizar mais um scroll e comparar o último filho da iteração atual com o da iteração anterior.
+        # document.querySelector(".isgrP").scrollTo(10, document.querySelector(".isgrP").scrollHeight);
+        # webdriver.Chrome.execute_script(script)
+
 
         followings = {}
-        following_elems_css_selector = ".Igw0E ._7UhW9.xLCgt a"
+        following_elems_css_selector = ".RnEpo.Yx5HN .isgrP .PZuss .FPmhX"
         following_elems = list(browser.find(following_elems_css_selector))
+        #document.querySelector(".wo9IH:first-child")
         last_following = None
-
         while following_elems:
             for ele in following_elems:
                 followings[ele.get_attribute(
                     "href")] = ele.get_attribute("title")
 
-            if last_liker == following_elems[-1]:
+            if last_following == following_elems[-1]:
                 break
 
-            last_liker = following_elems[-1]
-            last_liker.location_once_scrolled_into_view
+            last_following = following_elems[-1]
+            last_following.location_once_scrolled_into_view
             sleep(0.6)
             following_elems = list(browser.find(following_elems_css_selector))
-            close_btn = browser.find_one(".WaOAr button")
-            close_btn.click()
+
+        close_btn = browser.find_one(".WaOAr button")
+        close_btn.click()
 
 
         return {
