@@ -69,6 +69,16 @@ class Persist():
                 deleted BOOLEAN,
                 PRIMARY KEY (id_profile,id_post)
             );
+            CREATE TABLE IF NOT EXISTS following
+            (
+                id_followed INTEGER REFERENCES profile(id),
+                id_follower INTEGER REFERENCES profile(id),
+                last_visit BIGINT,
+                created_at BIGINT,
+                deleted BOOLEAN,
+                PRIMARY KEY (id_followed,id_follower)
+            );
+
             """
         ]
         cur = self.db.cursor()

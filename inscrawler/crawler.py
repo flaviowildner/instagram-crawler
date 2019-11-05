@@ -113,6 +113,31 @@ class InsCrawler(Logging):
         follower_num = statistics[1].get_attribute("title").replace(",", "")
         following_num = statistics[2].text.replace(",", "")
 
+        following_btn = statistics[1]
+        following_btn.click()
+
+
+        followings = {}
+        following_elems_css_selector = ".Igw0E ._7UhW9.xLCgt a"
+        following_elems = list(browser.find(following_elems_css_selector))
+        last_following = None
+
+        while following_elems:
+            for ele in following_elems:
+                followings[ele.get_attribute(
+                    "href")] = ele.get_attribute("title")
+
+            if last_liker == following_elems[-1]:
+                break
+
+            last_liker = following_elems[-1]
+            last_liker.location_once_scrolled_into_view
+            sleep(0.6)
+            following_elems = list(browser.find(following_elems_css_selector))
+            close_btn = browser.find_one(".WaOAr button")
+            close_btn.click()
+
+
         return {
             "name": name.text if name else None,
             "desc": desc.text if desc else None,
@@ -120,6 +145,7 @@ class InsCrawler(Logging):
             "post_num": post_num,
             "follower_num": follower_num,
             "following_num": following_num,
+            "followings": list(followings.values())
         }
 
     def get_user_profile_from_script_shared_data(self, username):

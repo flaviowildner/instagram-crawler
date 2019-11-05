@@ -148,6 +148,7 @@ if __name__ == "__main__":
     elif args.mode == "profile":
         arg_required("username")
         profile = get_profile(args.username)
+        print(profile)
         output(profile, args.output)
         persist = Persist()
         profile["username"] = args.username
