@@ -28,6 +28,7 @@ from .utils import instagram_int
 from .utils import randmized_sleep
 from .utils import retry
 
+from selenium import webdriver
 
 
 class Logging(object):
@@ -63,7 +64,6 @@ class Logging(object):
         self.logger.close()
 
 
-
 class InsCrawler(Logging):
     URL = "https://www.instagram.com"
     RETRY_LIMIT = 10
@@ -97,15 +97,28 @@ class InsCrawler(Logging):
 
         check_login()
 
-    def get_user_profile(self, username):
+    def get_user_profile(self, username, follow_list_enabled=False):
         browser = self.browser
         url = "%s/%s/" % (InsCrawler.URL, username)
         browser.get(url)
-        name = browser.find_one(".rhpdm")
-        desc = browser.find_one(".-vDIg span")
-        photo = browser.find_one("._6q-tv") # Class for public profiles
-        #TODO
-        #Get photo for private profile by using 'be6sR' class
+
+        tmp_name = browser.find_one(".rhpdm")
+        name = ''
+        if tmp_name is not None:
+            name = tmp_name.text
+
+        tmp_desc = browser.find_one(".-vDIg span")
+        desc = ''
+        if tmp_desc is not None:
+            desc = tmp_desc.text
+
+        tmp_photo = browser.find_one("._6q-tv")
+        photo = ''
+        if tmp_photo is not None and hasattr(tmp_photo, "get_attribute"):
+            photo = tmp_photo.get_attribute("src") # Class for public profiles
+            
+        # TODO
+        # Get photo for private profile by using 'be6sR' class
 
         statistics = browser.find(".g47SY")
 
@@ -113,47 +126,64 @@ class InsCrawler(Logging):
         follower_num = statistics[1].get_attribute("title").replace(",", "")
         following_num = statistics[2].text.replace(",", "")
 
-        following_btn = statistics[1]
-        following_btn.click()
+        followers = None
+        if follow_list_enabled:
+            follower_btn = statistics[1]
+            follower_btn.click()
 
-        # scrollar até o final da lista de seguidores para assim gerar uma única vez a lista pelo find.
-        # Utilizar o document.querySelector(".wo9IH:first-child") para obter o último filho do scroll.
-        # Após isso realizar mais um scroll e comparar o último filho da iteração atual com o da iteração anterior.
-        # document.querySelector(".isgrP").scrollTo(10, document.querySelector(".isgrP").scrollHeight);
-        # webdriver.Chrome.execute_script(script)
+            follower_elems_css_selector = ".RnEpo.Yx5HN .isgrP .PZuss .FPmhX"
+            follower_elems = list(browser.find(follower_elems_css_selector, waittime=0.6))
 
+            username_last_check = None
+            current_username = None
 
-        followings = {}
-        following_elems_css_selector = ".RnEpo.Yx5HN .isgrP .PZuss .FPmhX"
-        following_elems = list(browser.find(following_elems_css_selector))
-        #document.querySelector(".wo9IH:first-child")
-        last_following = None
-        while following_elems:
-            for ele in following_elems:
-                followings[ele.get_attribute(
-                    "href")] = ele.get_attribute("title")
-
-            if last_following == following_elems[-1]:
-                break
-
-            last_following = following_elems[-1]
-            last_following.location_once_scrolled_into_view
+            follower_elems[-1].location_once_scrolled_into_view
             sleep(0.6)
-            following_elems = list(browser.find(following_elems_css_selector))
 
-        close_btn = browser.find_one(".WaOAr button")
-        close_btn.click()
+            follower_elems = list(browser.find(follower_elems_css_selector))
+            last_follower = follower_elems[-1]
+            username_last_check = last_follower.get_attribute("title")
+            while follower_elems:
+                # Scroll down
+                script = "document.querySelector(\".isgrP\").scrollTo(0, document.querySelector(\".isgrP\").scrollHeight);"
+                self.browser.driver.execute_script(script)
+                sleep(0.6)
+
+                # Get last username
+                last_profile = browser.find_one(".wo9IH:last-child .enpQJ a")
+                current_username = ''
+                if last_profile is not None and hasattr(last_profile, "get_attribute"):
+                    current_username = last_profile.get_attribute("title")
+                else:
+                    break
+
+                # Check if the last username of current iteration is the same as the previous iteration
+                if current_username == username_last_check:
+                    break
+
+                # Save last username of list
+                username_last_check = current_username
+
+            follower_elems = list(browser.find(follower_elems_css_selector, waittime=1))
+            followers = list([ele.get_attribute("title") for ele in follower_elems])
+
+            close_btn = browser.find_one("button.wpO6b")
+            close_btn.click()
 
 
-        return {
-            "name": name.text if name else None,
-            "desc": desc.text if desc else None,
-            "photo_url": photo.get_attribute("src") if photo else None,
+        return_obj = {
+            "name": name,
+            "desc": desc,
+            "photo_url": photo,
             "post_num": post_num,
             "follower_num": follower_num,
-            "following_num": following_num,
-            "followings": list(followings.values())
+            "following_num": following_num
         }
+
+        if followers is not None:
+            return_obj['followers'] = followers
+
+        return return_obj
 
     def get_user_profile_from_script_shared_data(self, username):
         browser = self.browser

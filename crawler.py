@@ -33,10 +33,10 @@ def get_posts_by_user(username, number, detail, debug):
     return ins_crawler.get_user_posts(username, number, detail)
 
 
-def get_profile(username, debug):
+def get_profile(username, debug=False, follow_list_enabled=False):
     ins_crawler = InsCrawler(has_screen=debug)
     ins_crawler.login()
-    return ins_crawler.get_user_profile(username)
+    return ins_crawler.get_user_profile(username, follow_list_enabled)
 
 
 def get_profile_from_script(username):
@@ -148,12 +148,21 @@ if __name__ == "__main__":
 
     elif args.mode == "profile":
         arg_required("username")
-        profile = get_profile(args.username, args.debug)
-        print(profile)
+        profile = get_profile(args.username, args.debug, True)
         output(profile, args.output)
         persist = Persist()
         profile["username"] = args.username
         persist.persistProfile(profile)
+
+        # Check for missing followers in database and persist them
+        missing_profile_usernames = persist.getMissingProfiles(profile['followers'])
+        for missed_username in missing_profile_usernames:
+            missed_profile = get_profile(missed_username, args.debug)
+            missed_profile['username'] = missed_username
+            persist.persistProfile(missed_profile)
+
+        persist.persistFollowing(profile)
+        
 
     elif args.mode == "profile_script":
         arg_required("username")

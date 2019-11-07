@@ -86,6 +86,16 @@ class Persist():
         cur.close()
         self.db.commit()
 
+
+    def getMissingProfiles(self, profile_list):
+        """Return list of non-persisted profiles"""
+        missing_profiles = []
+        for profile in profile_list if profile_list is not None else []:
+            if self.getUserIdByUsername(profile) is None:
+                missing_profiles.append(profile)
+
+        return missing_profiles
+
     def getUserIdByUsername(self, username):
         if self.db is None:
             return
@@ -139,6 +149,26 @@ class Persist():
         cur.close()
 
         return id_post
+
+    def persistFollowing(self, profile):
+        print('Persisting follow relation...')
+        if self.db is None:
+            return
+
+        id_followed = self.getUserIdByUsername(profile['username'])
+        for user_following in profile['followers']:
+            id_follower = self.getUserIdByUsername(user_following)
+
+            sql = """
+                INSERT INTO following(id_followed, id_follower, last_visit, created_at, deleted)
+                VALUES(%s, %s, %s, %s, %s);
+            """
+            cur = self.db.cursor()
+            cur.execute(sql, (id_followed, id_follower, int(datetime.now().timestamp()), int(datetime.now().timestamp())), False)
+
+        self.db.commit()
+        print('Done!')
+        cur.close()
 
     def persistProfile(self, profile):
         if self.db is None:
