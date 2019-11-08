@@ -85,7 +85,7 @@ class Persist():
             cur.execute(command)
         cur.close()
         self.db.commit()
-
+        
 
     def getMissingProfiles(self, profile_list):
         """Return list of non-persisted profiles"""
@@ -122,7 +122,7 @@ class Persist():
 
         sql = """
             SELECT nextval('%s')
-        """ %(sequence)
+        """ % (sequence)
 
         cur = self.db.cursor()
         cur.execute(sql)
@@ -155,6 +155,8 @@ class Persist():
         if self.db is None:
             return
 
+        capture_time = profile['capture_time'] if 'capture_time' in profile.keys() else int(datetime.now().timestamp())
+
         id_followed = self.getUserIdByUsername(profile['username'])
         for user_following in profile['followers']:
             id_follower = self.getUserIdByUsername(user_following)
@@ -164,7 +166,8 @@ class Persist():
                 VALUES(%s, %s, %s, %s, %s);
             """
             cur = self.db.cursor()
-            cur.execute(sql, (id_followed, id_follower, int(datetime.now().timestamp()), int(datetime.now().timestamp()), False))
+            cur.execute(sql, (id_followed, id_follower,
+                              capture_time, capture_time, False))
 
         self.db.commit()
         print('Done!')
@@ -207,14 +210,14 @@ class Persist():
                 VALUES(%s, %s, %s, %s, %s);
             """
             cur.execute(sql, (comment['id_post'], comment['id_author'], comment['comment'], int(
-            datetime.now().timestamp()), False))
+                datetime.now().timestamp()), False))
         else:
             sql = """
                 INSERT INTO comment(id, id_post, id_author, comment, last_visit, deleted)
                 VALUES(%s, %s, %s, %s, %s, %s);
             """
             cur.execute(sql, (id, comment['id_post'], comment['id_author'], comment['comment'], int(
-            datetime.now().timestamp()), False))
+                datetime.now().timestamp()), False))
 
         self.db.commit()
         cur.close()
@@ -227,7 +230,8 @@ class Persist():
             VALUES(%s, %s, %s, %s, %s);
         """
         cur = self.db.cursor()
-        cur.execute(sql, (id_profile, id_comment, int(datetime.now().timestamp()), int(datetime.now().timestamp()), False))
+        cur.execute(sql, (id_profile, id_comment, int(
+            datetime.now().timestamp()), int(datetime.now().timestamp()), False))
         self.db.commit()
         cur.close()
 

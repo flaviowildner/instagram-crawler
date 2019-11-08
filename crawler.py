@@ -152,6 +152,7 @@ if __name__ == "__main__":
         ins_crawler = InsCrawler(has_screen=args.debug)
         ins_crawler.login()
         profile = ins_crawler.get_user_profile(args.username, True)
+        profile['capture_time'] = int(datetime.now().timestamp())
 
         output(profile, args.output)
         persist = Persist()
