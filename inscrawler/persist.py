@@ -164,7 +164,7 @@ class Persist():
                 VALUES(%s, %s, %s, %s, %s);
             """
             cur = self.db.cursor()
-            cur.execute(sql, (id_followed, id_follower, int(datetime.now().timestamp()), int(datetime.now().timestamp())), False)
+            cur.execute(sql, (id_followed, id_follower, int(datetime.now().timestamp()), int(datetime.now().timestamp()), False))
 
         self.db.commit()
         print('Done!')

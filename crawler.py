@@ -148,7 +148,11 @@ if __name__ == "__main__":
 
     elif args.mode == "profile":
         arg_required("username")
-        profile = get_profile(args.username, args.debug, True)
+
+        ins_crawler = InsCrawler(has_screen=args.debug)
+        ins_crawler.login()
+        profile = ins_crawler.get_user_profile(args.username, True)
+
         output(profile, args.output)
         persist = Persist()
         profile["username"] = args.username
@@ -157,7 +161,7 @@ if __name__ == "__main__":
         # Check for missing followers in database and persist them
         missing_profile_usernames = persist.getMissingProfiles(profile['followers'])
         for missed_username in missing_profile_usernames:
-            missed_profile = get_profile(missed_username, args.debug)
+            missed_profile = ins_crawler.get_user_profile(missed_username, False)
             missed_profile['username'] = missed_username
             persist.persistProfile(missed_profile)
 
