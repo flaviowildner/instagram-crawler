@@ -102,23 +102,23 @@ class InsCrawler(Logging):
         url = "%s/%s/" % (InsCrawler.URL, username)
         browser.get(url)
 
-        tmp_name = browser.find_one(".rhpdm")
-        name = ''
-        if tmp_name is not None:
-            name = tmp_name.text
+        try:
+            name = browser.find_one(".rhpdm").text
+        except AttributeError:
+            name = ''
+        
+        try:
+            desc = browser.find_one(".-vDIg span").text
+        except AttributeError:
+            desc = ''
 
-        tmp_desc = browser.find_one(".-vDIg span")
-        desc = ''
-        if tmp_desc is not None:
-            desc = tmp_desc.text
-
-        tmp_photo = browser.find_one("._6q-tv")
-        photo = ''
-        if tmp_photo is not None and hasattr(tmp_photo, "get_attribute"):
-            photo = tmp_photo.get_attribute("src") # Class for public profiles
-            
-        # TODO
-        # Get photo for private profile by using 'be6sR' class
+        try:
+            photo = browser.find_one("._6q-tv").get_attribute("src")
+        except AttributeError:
+            try:
+                photo = browser.find_one(".be6sR").get_attribute("src") #Private profile
+            except AttributeError:
+                photo = ''
 
         statistics = browser.find(".g47SY")
 
@@ -151,10 +151,9 @@ class InsCrawler(Logging):
 
                 # Get last username
                 last_profile = browser.find_one(".wo9IH:last-child .enpQJ a")
-                current_username = ''
-                if last_profile is not None and hasattr(last_profile, "get_attribute"):
+                try:
                     current_username = last_profile.get_attribute("title")
-                else:
+                except AttributeError:
                     break
 
                 # Check if the last username of current iteration is the same as the previous iteration

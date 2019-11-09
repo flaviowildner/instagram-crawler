@@ -151,7 +151,6 @@ class Persist():
         return id_post
 
     def persistFollowing(self, profile):
-        print('Persisting follow relation...')
         if self.db is None:
             return
 
@@ -170,12 +169,12 @@ class Persist():
                               capture_time, capture_time, False))
 
         self.db.commit()
-        print('Done!')
         cur.close()
 
     def persistProfile(self, profile):
         if self.db is None:
             return
+
         sql = """
             INSERT INTO profile(username, name, description, n_followers, n_following, n_posts, photo_url, last_visit, created_at)
             VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s);
