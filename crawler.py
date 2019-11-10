@@ -6,6 +6,10 @@ import json
 import sys
 from io import open
 from datetime import datetime
+from multiprocessing.pool import ThreadPool
+from time import sleep
+
+import math
 
 from inscrawler import InsCrawler
 from inscrawler.settings import override_settings
@@ -36,7 +40,7 @@ def get_posts_by_user(username, number, detail, debug):
 def get_profile(username, debug=False, follow_list_enabled=False):
     ins_crawler = InsCrawler(has_screen=debug)
     ins_crawler.login()
-    return ins_crawler.get_user_profile(username, follow_list_enabled)
+    return ins_crawler.get_user_profile(username, None, follow_list_enabled)
 
 
 def get_profile_from_script(username):
@@ -47,6 +51,22 @@ def get_profile_from_script(username):
 def get_posts_by_hashtag(tag, number, debug):
     ins_crawler = InsCrawler(has_screen=debug)
     return ins_crawler.get_latest_posts_by_tag(tag, number)
+
+
+def get_user_profile_worker(ins_crawler, tab, missing_profile_usernames, debug):
+    print('Running thread for ', missing_profile_usernames)
+
+    for missed_username in missing_profile_usernames:
+        missed_profile = ins_crawler.get_user_profile(
+            missed_username, tab, False)
+        missed_profile['username'] = missed_username
+        print('Persisting profile of ', missed_username, '...')
+        persist.persistProfile(missed_profile)
+        print('Persisting done for ', missed_username, '.')
+    ins_crawler.browser.switch_to_tab(tab)
+    ins_crawler.browser.release_lock()
+    ins_crawler.browser.close_current_tab()
+    print('End!')
 
 
 def arg_required(args, fields=[]):
@@ -147,11 +167,15 @@ if __name__ == "__main__":
         output(posts, args.output,)
 
     elif args.mode == "profile":
+        n_threads = 2
+        thread_pool = ThreadPool(n_threads)
+
         arg_required("username")
 
         ins_crawler = InsCrawler(has_screen=args.debug)
         ins_crawler.login()
-        profile = ins_crawler.get_user_profile(args.username, True)
+
+        profile = ins_crawler.get_user_profile(args.username, None, True)
         profile['capture_time'] = int(datetime.now().timestamp())
 
         output(profile, args.output)
@@ -160,14 +184,23 @@ if __name__ == "__main__":
         persist.persistProfile(profile)
 
         # Check for missing followers in database and persist them
-        missing_profile_usernames = persist.getMissingProfiles(profile['followers'])
-        for missed_username in missing_profile_usernames:
-            missed_profile = ins_crawler.get_user_profile(missed_username, False)
-            missed_profile['username'] = missed_username
-            persist.persistProfile(missed_profile)
+        missing_profile_usernames = list(
+            persist.getMissingProfiles(profile['followers']))
+        chunk_size = math.ceil(len(missing_profile_usernames) / n_threads)
 
-        persist.persistFollowing(profile)
-        
+        tab_handles = list()
+        for i in range(n_threads):
+            current_tab = ins_crawler.browser.driver.current_window_handle
+            tab_handles.append(ins_crawler.browser.create_tab())
+
+        for i in range(n_threads):
+            thread_pool.apply_async(get_user_profile_worker, (ins_crawler, tab_handles[i],
+                                                              missing_profile_usernames[i * chunk_size: (i + 1) * chunk_size], args.debug))
+
+        thread_pool.close()
+        thread_pool.join()
+
+        # persist.persistFollowing(profile)
 
     elif args.mode == "profile_script":
         arg_required("username")

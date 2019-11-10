@@ -97,8 +97,13 @@ class InsCrawler(Logging):
 
         check_login()
 
-    def get_user_profile(self, username, follow_list_enabled=False):
+    def get_user_profile(self, username, tab, follow_list_enabled=False):
+        print('getting user profile of ', username, '...')
         browser = self.browser
+
+        if tab is None:
+            tab = self.browser.driver.current_window_handle
+        self.browser.switch_to_tab(tab)
         url = "%s/%s/" % (InsCrawler.URL, username)
         browser.get(url)
 
@@ -106,7 +111,7 @@ class InsCrawler(Logging):
             name = browser.find_one(".rhpdm").text
         except AttributeError:
             name = ''
-        
+
         try:
             desc = browser.find_one(".-vDIg span").text
         except AttributeError:
@@ -116,7 +121,8 @@ class InsCrawler(Logging):
             photo = browser.find_one("._6q-tv").get_attribute("src")
         except AttributeError:
             try:
-                photo = browser.find_one(".be6sR").get_attribute("src") #Private profile
+                photo = browser.find_one(".be6sR").get_attribute(
+                    "src")  # Private profile
             except AttributeError:
                 photo = ''
 
@@ -132,13 +138,17 @@ class InsCrawler(Logging):
             follower_btn.click()
 
             follower_elems_css_selector = ".RnEpo.Yx5HN .isgrP .PZuss .FPmhX"
-            follower_elems = list(browser.find(follower_elems_css_selector, waittime=0.6))
+            follower_elems = list(browser.find(
+                follower_elems_css_selector, waittime=0.6))
 
             username_last_check = None
             current_username = None
 
             follower_elems[-1].location_once_scrolled_into_view
+
+            self.browser.release_lock()
             sleep(0.6)
+            self.browser.switch_to_tab(tab)
 
             follower_elems = list(browser.find(follower_elems_css_selector))
             last_follower = follower_elems[-1]
@@ -147,7 +157,9 @@ class InsCrawler(Logging):
                 # Scroll down
                 script = "document.querySelector(\".isgrP\").scrollTo(0, document.querySelector(\".isgrP\").scrollHeight);"
                 self.browser.driver.execute_script(script)
+                self.browser.release_lock()
                 sleep(0.6)
+                self.browser.switch_to_tab(tab)
 
                 # Get last username
                 last_profile = browser.find_one(".wo9IH:last-child .enpQJ a")
@@ -163,12 +175,15 @@ class InsCrawler(Logging):
                 # Save last username of list
                 username_last_check = current_username
 
-            follower_elems = list(browser.find(follower_elems_css_selector, waittime=1))
-            followers = list([ele.get_attribute("title") for ele in follower_elems])
+            follower_elems = list(browser.find(
+                follower_elems_css_selector, waittime=1))
+            followers = list([ele.get_attribute("title")
+                              for ele in follower_elems])
 
             close_btn = browser.find_one("button.wpO6b")
             close_btn.click()
-
+        
+        self.browser.release_lock()
 
         return_obj = {
             "name": name,
@@ -181,6 +196,8 @@ class InsCrawler(Logging):
 
         if followers is not None:
             return_obj['followers'] = followers
+
+        print('Done for ', username, '.')
 
         return return_obj
 

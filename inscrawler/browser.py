@@ -10,6 +10,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.keys import Keys
 
 from .utils import randmized_sleep
+from threading import Lock
 
 
 class Browser:
@@ -27,6 +28,7 @@ class Browser:
             chrome_options=chrome_options,
         )
         self.driver.implicitly_wait(5)
+        self.lock = Lock()
 
     @property
     def page_height(self):
@@ -85,14 +87,32 @@ class Browser:
     def js_click(self, elem):
         self.driver.execute_script("arguments[0].click();", elem)
 
+    def create_tab(self):
+        print('trying to acquire lock...')
+        self.lock.acquire()
+        print('acquired')
+        current_tab = self.driver.current_window_handle
+        self.driver.execute_script("window.open('');")
+        self.driver.switch_to.window(current_tab)
+        self.lock.release()
+        return self.driver.window_handles[-1]
+
     def open_new_tab(self, url):
         self.driver.execute_script("window.open('%s');" %url)
         self.driver.switch_to.window(self.driver.window_handles[1])
 
     def close_current_tab(self):
         self.driver.close()
+    
+    def switch_to_tab(self, tab):
+        print('trying to acquire lock...')
+        self.lock.acquire()
+        print('acquired')
+        self.driver.switch_to.window(tab)
 
-        self.driver.switch_to.window(self.driver.window_handles[0])
+    def release_lock(self):
+        print('lock released')
+        self.lock.release()
 
     def __del__(self):
         try:
