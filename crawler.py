@@ -157,7 +157,16 @@ if __name__ == "__main__":
         output(profile, args.output)
         persist = Persist()
         profile["username"] = args.username
-        persist.persistProfile(profile)
+        try:
+            persist.persistProfile(profile)
+        except:
+            persist.db.rollback()
+            id_profile = persist.getUserIdByUsername(args.username)
+            if id_profile is None:
+                raise Exception('The profile of specified username does not exist')
+
+            profile['id'] = id_profile
+            persist.updateProfile(profile)
 
         # Check for missing followers in database and persist them
         missing_profile_usernames = persist.getMissingProfiles(profile['followers'])

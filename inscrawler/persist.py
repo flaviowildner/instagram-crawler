@@ -160,15 +160,26 @@ class Persist():
         for user_following in profile['followers']:
             id_follower = self.getUserIdByUsername(user_following)
 
-            sql = """
-                INSERT INTO following(id_followed, id_follower, last_visit, created_at, deleted)
-                VALUES(%s, %s, %s, %s, %s);
-            """
-            cur = self.db.cursor()
-            cur.execute(sql, (id_followed, id_follower,
-                              capture_time, capture_time, False))
+            try:
+                sql = """
+                    INSERT INTO following(id_followed, id_follower, last_visit, created_at, deleted)
+                    VALUES(%s, %s, %s, %s, %s);
+                """
+                cur = self.db.cursor()
+                cur.execute(sql, (id_followed, id_follower,
+                                capture_time, capture_time, False))
+                self.db.commit()
+            except:
+                self.db.rollback()
+                
+                sql = """
+                UPDATE following SET last_visit = %s
+                WHERE id_followed = %s AND id_follower = %s;
+                """
+                cur = self.db.cursor()
+                cur.execute(sql, (capture_time, id_followed, id_follower))
+                self.db.commit()
 
-        self.db.commit()
         cur.close()
 
     def persistProfile(self, profile):
@@ -246,4 +257,21 @@ class Persist():
         cur.execute(sql, (id_profile, id_post, int(
             datetime.now().timestamp()), int(datetime.now().timestamp()), False))
         self.db.commit()
+        cur.close()
+
+    def updateProfile(self, profile):
+        if self.db is None:
+            return
+
+        sql = """
+            UPDATE profile SET name = %s, description = %s, n_followers = %s, n_following = %s, 
+                n_posts = %s, photo_url = %s, last_visit = %s
+            WHERE id = %s;
+        """
+        cur = self.db.cursor()
+        cur.execute(sql, (profile["name"], profile["desc"], profile["follower_num"].replace(",", "").replace(".", ""), 
+                        profile["following_num"].replace(",", "").replace(".", ""), profile["post_num"].replace(",", "").replace(".", ""), 
+                        profile["photo_url"], int(datetime.now().timestamp()), profile["id"]))
+        self.db.commit()
+
         cur.close()
