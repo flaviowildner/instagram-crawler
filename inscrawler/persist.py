@@ -180,8 +180,9 @@ class Persist():
             VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s);
         """
         cur = self.db.cursor()
-        cur.execute(sql, (profile["username"], profile["name"], profile["desc"], profile["follower_num"], profile["following_num"],
-                          profile["post_num"], profile["photo_url"], int(datetime.now().timestamp()), int(datetime.now().timestamp())))
+        cur.execute(sql, (profile["username"], profile["name"], profile["desc"], profile["follower_num"].replace(",", "").replace(".", ""), 
+                        profile["following_num"].replace(",", "").replace(".", ""), profile["post_num"].replace(",", "").replace(".", ""), 
+                        profile["photo_url"], int(datetime.now().timestamp()), int(datetime.now().timestamp())))
         self.db.commit()
         cur.close()
 
