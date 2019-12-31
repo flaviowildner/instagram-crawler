@@ -108,7 +108,7 @@ class InsCrawler(Logging):
             name = ''
         
         try:
-            desc = browser.find_one(".-vDIg span").text
+            desc = browser.find_one(".-vDIg > span").text
         except AttributeError:
             desc = ''
 
