@@ -193,14 +193,15 @@ def fetch_comments(browser, dict_post):
                 close_btn = browser.find_one(".WaOAr button")
                 close_btn.click()
 
-        temp_element = browser.find("span", els_comment)
-
-        for element in temp_element:
-
+        comment_element = browser.find("span", els_comment)
+        for element in comment_element:
             if element.text not in ['Verified', '']:
                 comment = element.text
-
         comment_obj["comment"] = comment
+
+        time_element = browser.find_one("time", els_comment)
+        datetime = time_element.get_attribute("datetime")
+        comment_obj["datetime"] = datetime
 
         fetch_mentions(comment, comment_obj)
         fetch_hashtags(comment, comment_obj)

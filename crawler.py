@@ -93,7 +93,8 @@ if __name__ == "__main__":
         id_profile = persist.getUserIdByUsername(args.username)
 
         if id_profile is None:
-            raise Exception('The profile of specified username does not exist')
+            id_profile = persist.addProfile(args.username)
+            #raise Exception('The profile of specified username does not exist')
 
         for post in posts:
             post['id_profile'] = id_profile
@@ -103,10 +104,11 @@ if __name__ == "__main__":
                 author = comment['author']
                 id_profile = persist.getUserIdByUsername(author)
                 if id_profile is None:
-                    profile = get_profile(author)
-                    profile['username'] = author
-                    persist.persistProfile(profile)
-                    id_profile = persist.getUserIdByUsername(author)
+                    id_profile = persist.addProfile(author)
+                    #profile = get_profile(author)
+                    #profile['username'] = author
+                    #persist.persistProfile(profile)
+                    #id_profile = persist.getUserIdByUsername(author)
 
                 id_post = persist.getPostIdByUrl(post['key'])
 

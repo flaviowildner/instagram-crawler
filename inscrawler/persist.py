@@ -48,6 +48,7 @@ class Persist():
                 id_author INTEGER REFERENCES profile(id),
                 comment TEXT,
                 last_visit BIGINT,
+                comment_date BIGINT,
                 deleted BOOLEAN,
                 PRIMARY KEY (id)
             );
@@ -239,18 +240,18 @@ class Persist():
         cur = self.db.cursor()
         if id is None:
             sql = """
-                INSERT INTO comment(id_post, id_author, comment, last_visit, deleted)
-                VALUES(%s, %s, %s, %s, %s);
-            """
-            cur.execute(sql, (comment['id_post'], comment['id_author'], comment['comment'], int(
-                datetime.now().timestamp()), False))
-        else:
-            sql = """
-                INSERT INTO comment(id, id_post, id_author, comment, last_visit, deleted)
+                INSERT INTO comment(id_post, id_author, comment, last_visit, comment_date, deleted)
                 VALUES(%s, %s, %s, %s, %s, %s);
             """
+            cur.execute(sql, (comment['id_post'], comment['id_author'], comment['comment'], int(
+                datetime.now().timestamp()), int(dateutil.parser.parse(comment['datetime']).timestamp()), False))
+        else:
+            sql = """
+                INSERT INTO comment(id, id_post, id_author, comment, last_visit, comment_date, deleted)
+                VALUES(%s, %s, %s, %s, %s, %s, %s);
+            """
             cur.execute(sql, (id, comment['id_post'], comment['id_author'], comment['comment'], int(
-                datetime.now().timestamp()), False))
+                datetime.now().timestamp()), int(dateutil.parser.parse(comment['datetime']).timestamp()), False))
 
         self.db.commit()
         cur.close()
