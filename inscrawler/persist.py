@@ -85,7 +85,6 @@ class Persist():
             cur.execute(command)
         cur.close()
         self.db.commit()
-        
 
     def getMissingProfiles(self, profile_list):
         """Return list of non-persisted profiles"""
@@ -130,6 +129,27 @@ class Persist():
         cur.close()
         return id
 
+    def addProfile(self, username):
+        if self.db is None:
+            return
+
+        profile_id = self.getNextSequenceId('profile_id_seq')
+
+        sql = """
+            INSERT INTO profile(id, username, last_visit) VALUES (%s, %s, %s);
+        """
+
+        try:
+            cur = self.db.cursor()
+            cur.execute(sql, (profile_id, username, 0))
+            self.db.commit()
+        except:
+            self.db.rollback()
+
+        cur.close()
+
+        return profile_id
+
     def getPostIdByUrl(self, url):
         if self.db is None:
             return
@@ -154,7 +174,8 @@ class Persist():
         if self.db is None:
             return
 
-        capture_time = profile['capture_time'] if 'capture_time' in profile.keys() else int(datetime.now().timestamp())
+        capture_time = profile['capture_time'] if 'capture_time' in profile.keys(
+        ) else int(datetime.now().timestamp())
 
         id_followed = self.getUserIdByUsername(profile['username'])
         for user_following in profile['followers']:
@@ -167,11 +188,11 @@ class Persist():
                 """
                 cur = self.db.cursor()
                 cur.execute(sql, (id_followed, id_follower,
-                                capture_time, capture_time, False))
+                                  capture_time, capture_time, False))
                 self.db.commit()
             except:
                 self.db.rollback()
-                
+
                 sql = """
                 UPDATE following SET last_visit = %s
                 WHERE id_followed = %s AND id_follower = %s;
@@ -191,9 +212,10 @@ class Persist():
             VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s);
         """
         cur = self.db.cursor()
-        cur.execute(sql, (profile["username"], profile["name"], profile["desc"], profile["follower_num"].replace(",", "").replace(".", ""), 
-                        profile["following_num"].replace(",", "").replace(".", ""), profile["post_num"].replace(",", "").replace(".", ""), 
-                        profile["photo_url"], int(datetime.now().timestamp()), int(datetime.now().timestamp())))
+        cur.execute(sql, (profile["username"], profile["name"], profile["desc"], profile["follower_num"].replace(",", "").replace(".", ""),
+                          profile["following_num"].replace(",", "").replace(
+            ".", ""), profile["post_num"].replace(",", "").replace(".", ""),
+            profile["photo_url"], int(datetime.now().timestamp()), int(datetime.now().timestamp())))
         self.db.commit()
         cur.close()
 
@@ -269,9 +291,10 @@ class Persist():
             WHERE id = %s;
         """
         cur = self.db.cursor()
-        cur.execute(sql, (profile["name"], profile["desc"], profile["follower_num"].replace(",", "").replace(".", ""), 
-                        profile["following_num"].replace(",", "").replace(".", ""), profile["post_num"].replace(",", "").replace(".", ""), 
-                        profile["photo_url"], int(datetime.now().timestamp()), profile["id"]))
+        cur.execute(sql, (profile["name"], profile["desc"], profile["follower_num"].replace(",", "").replace(".", ""),
+                          profile["following_num"].replace(",", "").replace(
+            ".", ""), profile["post_num"].replace(",", "").replace(".", ""),
+            profile["photo_url"], int(datetime.now().timestamp()), profile["id"]))
         self.db.commit()
 
         cur.close()

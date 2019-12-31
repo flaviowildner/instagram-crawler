@@ -163,20 +163,24 @@ if __name__ == "__main__":
             persist.db.rollback()
             id_profile = persist.getUserIdByUsername(args.username)
             if id_profile is None:
-                raise Exception('The profile of specified username does not exist')
+                raise Exception(
+                    'The profile of specified username does not exist')
 
             profile['id'] = id_profile
             persist.updateProfile(profile)
 
         # Check for missing followers in database and persist them
+        #missing_profile_usernames = persist.getMissingProfiles(profile['followers'])
+        # for missed_username in missing_profile_usernames:
+        #    missed_profile = ins_crawler.get_user_profile(missed_username, False)
+        #    missed_profile['username'] = missed_username
+        #    persist.persistProfile(missed_profile)
+        
         missing_profile_usernames = persist.getMissingProfiles(profile['followers'])
         for missed_username in missing_profile_usernames:
-            missed_profile = ins_crawler.get_user_profile(missed_username, False)
-            missed_profile['username'] = missed_username
-            persist.persistProfile(missed_profile)
+            persist.addProfile(missed_username)            
 
         persist.persistFollowing(profile)
-        
 
     elif args.mode == "profile_script":
         arg_required("username")
