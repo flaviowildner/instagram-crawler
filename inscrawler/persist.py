@@ -282,20 +282,42 @@ class Persist():
         self.db.commit()
         cur.close()
 
+    def get_profiles_to_crawl(self, list_size=10):
+        if self.db is None:
+            return
+
+        sql = """
+            SELECT username FROM profile ORDER BY last_visit ASC LIMIT %s;
+        """
+
+        cur = self.db.cursor()
+        cur.execute(sql, (int(list_size), ))
+        profile_table = cur.fetchall()
+        result = [profile_table[i][0] for i in range(0, len(profile_table))]
+
+        cur.close()
+        return result
+
+
     def updateProfile(self, profile):
         if self.db is None:
             return
 
         sql = """
-            UPDATE profile SET name = %s, description = %s, n_followers = %s, n_following = %s, 
+            UPDATE profile SET name = %s, description = %s, n_followers = %s, n_following = %s,
                 n_posts = %s, photo_url = %s, last_visit = %s
             WHERE id = %s;
         """
-        cur = self.db.cursor()
-        cur.execute(sql, (profile["name"], profile["desc"], profile["follower_num"].replace(",", "").replace(".", ""),
-                          profile["following_num"].replace(",", "").replace(
-            ".", ""), profile["post_num"].replace(",", "").replace(".", ""),
-            profile["photo_url"], int(datetime.now().timestamp()), profile["id"]))
-        self.db.commit()
+
+        try:
+            cur = self.db.cursor()
+            cur.execute(sql, (profile["name"], profile["desc"], profile["follower_num"].replace(",", "").replace(".", ""),
+                              profile["following_num"].replace(",", "").replace(
+                ".", ""), profile["post_num"].replace(",", "").replace(".", ""),
+                profile["photo_url"], int(datetime.now().timestamp()), profile["id"]))
+            self.db.commit()
+        except:
+            self.db.rollback()
+            print('Profile was not updated - username:', profile["username"])
 
         cur.close()

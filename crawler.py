@@ -69,7 +69,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Instagram Crawler", usage=usage())
     parser.add_argument(
-        "mode", help="options: [posts, posts_full, profile, profile_script, hashtag]"
+        "mode", help="options: [posts, posts_full, profile, profile_script, hashtag, crawler]"
     )
     parser.add_argument("-n", "--number", type=int,
                         help="number of returned posts")
@@ -107,7 +107,7 @@ if __name__ == "__main__":
                     id_profile = persist.addProfile(author)
                     #profile = get_profile(author)
                     #profile['username'] = author
-                    #persist.persistProfile(profile)
+                    # persist.persistProfile(profile)
                     #id_profile = persist.getUserIdByUsername(author)
 
                 id_post = persist.getPostIdByUrl(post['key'])
@@ -177,10 +177,11 @@ if __name__ == "__main__":
         #    missed_profile = ins_crawler.get_user_profile(missed_username, False)
         #    missed_profile['username'] = missed_username
         #    persist.persistProfile(missed_profile)
-        
-        missing_profile_usernames = persist.getMissingProfiles(profile['followers'])
+
+        missing_profile_usernames = persist.getMissingProfiles(
+            profile['followers'])
         for missed_username in missing_profile_usernames:
-            persist.addProfile(missed_username)            
+            persist.addProfile(missed_username)
 
         persist.persistFollowing(profile)
 
@@ -193,5 +194,36 @@ if __name__ == "__main__":
             get_posts_by_hashtag(
                 args.tag, args.number or 100, args.debug), args.output
         )
+    elif args.mode == "crawler":
+        ins_crawler = InsCrawler(has_screen=args.debug)
+        ins_crawler.login()
+        persist = Persist()
+        while True:
+            profile_username_list = persist.get_profiles_to_crawl()
+            print(profile_username_list)
+            for username in profile_username_list:
+                profile = ins_crawler.get_user_profile(username, True)
+                profile['capture_time'] = int(datetime.now().timestamp())
+                profile["username"] = username
+
+                id_profile = persist.getUserIdByUsername(username)
+                if id_profile is None:
+                    raise Exception(
+                        'The profile of specified username does not exist')
+
+                profile['id'] = id_profile
+                persist.updateProfile(profile)
+
+                # Add follower list to datebase
+                if 'followers' in profile.keys():
+                    missing_profile_usernames = persist.getMissingProfiles(
+                        profile['followers'])
+                    for missed_username in missing_profile_usernames:
+                        persist.addProfile(missed_username)
+
+                    persist.persistFollowing(profile)
+
+        print('Updated')
+
     else:
         usage()

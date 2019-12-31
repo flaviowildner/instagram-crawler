@@ -132,42 +132,45 @@ class InsCrawler(Logging):
             follower_btn.click()
 
             follower_elems_css_selector = ".RnEpo.Yx5HN .isgrP .PZuss .FPmhX"
-            follower_elems = list(browser.find(follower_elems_css_selector, waittime=0.6))
+            try:
+                follower_elems = list(browser.find(follower_elems_css_selector, waittime=0.6))
 
-            username_last_check = None
-            current_username = None
+                username_last_check = None
+                current_username = None
 
-            follower_elems[-1].location_once_scrolled_into_view
-            sleep(0.6)
-
-            follower_elems = list(browser.find(follower_elems_css_selector))
-            last_follower = follower_elems[-1]
-            username_last_check = last_follower.get_attribute("title")
-            while follower_elems:
-                # Scroll down
-                script = "document.querySelector(\".isgrP\").scrollTo(0, document.querySelector(\".isgrP\").scrollHeight);"
-                self.browser.driver.execute_script(script)
+                follower_elems[-1].location_once_scrolled_into_view
                 sleep(0.6)
 
-                # Get last username
-                last_profile = browser.find_one(".wo9IH:last-child .enpQJ a")
-                try:
-                    current_username = last_profile.get_attribute("title")
-                except AttributeError:
-                    break
+                follower_elems = list(browser.find(follower_elems_css_selector))
+                last_follower = follower_elems[-1]
+                username_last_check = last_follower.get_attribute("title")
+                while follower_elems:
+                    # Scroll down
+                    script = "document.querySelector(\".isgrP\").scrollTo(0, document.querySelector(\".isgrP\").scrollHeight);"
+                    self.browser.driver.execute_script(script)
+                    sleep(0.6)
 
-                # Check if the last username of current iteration is the same as the previous iteration
-                if current_username == username_last_check:
-                    break
+                    # Get last username
+                    last_profile = browser.find_one(".wo9IH:last-child .enpQJ a")
+                    try:
+                        current_username = last_profile.get_attribute("title")
+                    except AttributeError:
+                        break
 
-                # Save last username of list
-                username_last_check = current_username
+                    # Check if the last username of current iteration is the same as the previous iteration
+                    if current_username == username_last_check:
+                        break
 
-            follower_elems = list(browser.find(follower_elems_css_selector, waittime=1))
-            followers = list([ele.get_attribute("title") for ele in follower_elems])
+                    # Save last username of list
+                    username_last_check = current_username
 
-            close_btn = browser.find_one("button.wpO6b")
-            close_btn.click()
+                follower_elems = list(browser.find(follower_elems_css_selector, waittime=1))
+                followers = list([ele.get_attribute("title") for ele in follower_elems])
+
+                close_btn = browser.find_one("button.wpO6b")
+                close_btn.click()
+            except:
+                print('Private profile')
 
 
         return_obj = {
