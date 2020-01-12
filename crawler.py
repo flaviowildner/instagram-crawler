@@ -27,9 +27,10 @@ def usage():
     """
 
 
-def get_posts_by_user(username, number, detail, debug):
-    ins_crawler = InsCrawler(has_screen=debug)
-    ins_crawler.login()
+def get_posts_by_user(username, number, detail, debug, ins_crawler = None):
+    if ins_crawler is None:
+        ins_crawler = InsCrawler(has_screen=debug)
+        ins_crawler.login()
     return ins_crawler.get_user_posts(username, number, detail)
 
 
@@ -65,6 +66,72 @@ def output(data, filepath):
         print(out)
 
 
+def get_post_full(username, number = None, debug = False, ins_crawler = None):
+    posts = get_posts_by_user(
+        username, number, True, debug, ins_crawler
+    )
+
+    persist = Persist()
+    id_profile = persist.getUserIdByUsername(username)
+
+    if id_profile is None:
+        id_profile = persist.addProfile(username)
+        #raise Exception('The profile of specified username does not exist')
+
+    for post in posts:
+        post['id_profile'] = id_profile
+        persist.persistPost(post)
+
+        for comment in post['comments'] if 'comments' in post.keys() else []:
+            author = comment['author']
+            id_profile = persist.getUserIdByUsername(author)
+            if id_profile is None:
+                id_profile = persist.addProfile(author)
+                #profile = get_profile(author)
+                #profile['username'] = author
+                # persist.persistProfile(profile)
+                #id_profile = persist.getUserIdByUsername(author)
+
+            id_post = persist.getPostIdByUrl(post['key'])
+
+            comment['id_author'] = id_profile
+            comment['id_post'] = id_post
+
+            if id_post is None:
+                raise Exception('The specified post does not exist')
+
+            id_comment = persist.getNextSequenceId('comment_id_seq')
+            persist.persistComment(comment, None, id_comment)
+
+            for liker in comment['likers'] if 'likers' in comment.keys() else []:
+                id_profile = persist.getUserIdByUsername(liker)
+                if id_profile is None:
+                    #profile = get_profile(liker)
+                    #profile['username'] = liker
+                    # persist.persistProfile(profile)
+                    id_profile = persist.addProfile(liker)
+                    #id_profile = persist.getUserIdByUsername(liker)
+
+                persist.persistLikeOnComment(id_profile, id_comment)
+
+        for liker in post['likers'] if 'likers' in post.keys() else []:
+            id_profile = persist.getUserIdByUsername(liker)
+            if id_profile is None:
+                id_profile = persist.addProfile(liker)
+                #profile = get_profile(liker)
+                #profile['username'] = liker
+                # persist.persistProfile(profile)
+                #id_profile = persist.getUserIdByUsername(liker)
+
+            id_post = persist.getPostIdByUrl(post['key'])
+
+            if id_post is None:
+                raise Exception('The specified post does not exist')
+
+            persist.persistLikeOnPost(id_profile, id_post)
+    return posts
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Instagram Crawler", usage=usage())
@@ -86,65 +153,7 @@ if __name__ == "__main__":
 
     if args.mode in ["posts", "posts_full"]:
         arg_required("username")
-        posts = get_posts_by_user(
-            args.username, args.number, args.mode == "posts_full", args.debug
-        )
-        persist = Persist()
-        id_profile = persist.getUserIdByUsername(args.username)
-
-        if id_profile is None:
-            id_profile = persist.addProfile(args.username)
-            #raise Exception('The profile of specified username does not exist')
-
-        for post in posts:
-            post['id_profile'] = id_profile
-            persist.persistPost(post)
-
-            for comment in post['comments'] if 'comments' in post.keys() else []:
-                author = comment['author']
-                id_profile = persist.getUserIdByUsername(author)
-                if id_profile is None:
-                    id_profile = persist.addProfile(author)
-                    #profile = get_profile(author)
-                    #profile['username'] = author
-                    # persist.persistProfile(profile)
-                    #id_profile = persist.getUserIdByUsername(author)
-
-                id_post = persist.getPostIdByUrl(post['key'])
-
-                comment['id_author'] = id_profile
-                comment['id_post'] = id_post
-
-                if id_post is None:
-                    raise Exception('The specified post does not exist')
-
-                id_comment = persist.getNextSequenceId('comment_id_seq')
-                persist.persistComment(comment, None, id_comment)
-
-                for liker in comment['likers'] if 'likers' in comment.keys() else []:
-                    id_profile = persist.getUserIdByUsername(liker)
-                    if id_profile is None:
-                        profile = get_profile(liker)
-                        profile['username'] = liker
-                        persist.persistProfile(profile)
-                        id_profile = persist.getUserIdByUsername(liker)
-
-                    persist.persistLikeOnComment(id_profile, id_comment)
-
-            for liker in post['likers'] if 'likers' in post.keys() else []:
-                id_profile = persist.getUserIdByUsername(liker)
-                if id_profile is None:
-                    profile = get_profile(liker)
-                    profile['username'] = liker
-                    persist.persistProfile(profile)
-                    id_profile = persist.getUserIdByUsername(liker)
-
-                id_post = persist.getPostIdByUrl(post['key'])
-
-                if id_post is None:
-                    raise Exception('The specified post does not exist')
-
-                persist.persistLikeOnPost(id_profile, id_post)
+        posts = get_post_full(args.username, args.number, args.debug)
 
         output(posts, args.output,)
 
@@ -199,7 +208,8 @@ if __name__ == "__main__":
         ins_crawler.login()
         persist = Persist()
         while True:
-            profile_username_list = persist.get_profiles_to_crawl()
+            profile_username_list = persist.get_profiles_to_crawl(
+                {"list_size": 10, "sql_mode": "visited"})
             print(profile_username_list)
             for username in profile_username_list:
                 profile = ins_crawler.get_user_profile(username, True)
@@ -222,6 +232,8 @@ if __name__ == "__main__":
                         persist.addProfile(missed_username)
 
                     persist.persistFollowing(profile)
+
+                get_post_full(username,None,args.debug, ins_crawler)
 
         print('Updated')
 

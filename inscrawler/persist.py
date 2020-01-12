@@ -27,6 +27,7 @@ class Persist():
                 last_visit BIGINT,
                 created_at BIGINT,
                 deleted BOOLEAN,
+                visited BOOLEAN,
                 PRIMARY KEY (id)
             );
             CREATE TABLE IF NOT EXISTS post
@@ -137,12 +138,12 @@ class Persist():
         profile_id = self.getNextSequenceId('profile_id_seq')
 
         sql = """
-            INSERT INTO profile(id, username, last_visit) VALUES (%s, %s, %s);
+            INSERT INTO profile(id, username, last_visit, created_at) VALUES (%s, %s, %s, %s);
         """
 
         try:
             cur = self.db.cursor()
-            cur.execute(sql, (profile_id, username, 0))
+            cur.execute(sql, (profile_id, username, 0, int(datetime.now().timestamp())))
             self.db.commit()
         except:
             self.db.rollback()
@@ -282,16 +283,22 @@ class Persist():
         self.db.commit()
         cur.close()
 
-    def get_profiles_to_crawl(self, list_size=10):
+    def get_profiles_to_crawl(self, params={"list_size":10,"sql_mode":"last_visit" }):
         if self.db is None:
             return
 
-        sql = """
-            SELECT username FROM profile ORDER BY last_visit ASC LIMIT %s;
-        """
+        if params["sql_mode"] == "last_visit":
+
+            sql = """
+                SELECT username FROM profile ORDER BY last_visit ASC LIMIT %s;
+            """
+        else:
+            sql = """
+                SELECT username FROM profile WHERE visited IS NULL or visited = false LIMIT %s;
+            """
 
         cur = self.db.cursor()
-        cur.execute(sql, (int(list_size), ))
+        cur.execute(sql, (int(params["list_size"]), ))
         profile_table = cur.fetchall()
         result = [profile_table[i][0] for i in range(0, len(profile_table))]
 
