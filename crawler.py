@@ -14,6 +14,9 @@ from inscrawler.settings import prepare_override_settings
 from inscrawler.persist import Persist
 import dateutil.parser
 
+import inscrawler.logger
+import logging
+
 
 def usage():
     return """
@@ -151,6 +154,8 @@ if __name__ == "__main__":
 
     override_settings(args)
 
+    logger = logging.getLogger(__name__)
+
     if args.mode in ["posts", "posts_full"]:
         arg_required("username")
         posts = get_post_full(args.username, args.number, args.debug)
@@ -174,8 +179,8 @@ if __name__ == "__main__":
             persist.db.rollback()
             id_profile = persist.getUserIdByUsername(args.username)
             if id_profile is None:
-                raise Exception(
-                    'The profile of specified username does not exist')
+                logger.error('The profile of specified username does not exist')
+                raise Exception('The profile of specified username does not exist')
 
             profile['id'] = id_profile
             persist.updateProfile(profile)
@@ -218,8 +223,8 @@ if __name__ == "__main__":
 
                 id_profile = persist.getUserIdByUsername(username)
                 if id_profile is None:
-                    raise Exception(
-                        'The profile of specified username does not exist')
+                    logger.error('The profile of specified username does not exist')
+                    raise Exception('The profile of specified username does not exist')
 
                 profile['id'] = id_profile
                 persist.updateProfile(profile)
