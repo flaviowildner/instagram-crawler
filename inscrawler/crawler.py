@@ -270,6 +270,11 @@ class InsCrawler(Logging):
         browser.implicitly_wait(1)
         browser.scroll_down()
         ele_post = browser.find_one(".v1Nh3 a")
+
+        #Return empty list for users without posts
+        if ele_post is None:
+            return list()
+
         ele_post.click()
         dict_posts = {}
 
