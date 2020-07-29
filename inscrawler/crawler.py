@@ -72,6 +72,7 @@ class InsCrawler(Logging):
         super(InsCrawler, self).__init__()
         self.browser = Browser(has_screen)
         self.page_height = 0
+        self.login()
 
     def _dismiss_login_prompt(self):
         ele_login = self.browser.find_one(".Ls00D .Szr5J")
@@ -282,13 +283,18 @@ class InsCrawler(Logging):
         pbar.set_description("fetching")
         cur_key = None
 
+        all_posts = self._get_posts(num)
+        i = 1
+
         # Fetching all posts
         for _ in range(num):
             dict_post = {}
 
             # Fetching post detail
             try:
-                check_next_post(cur_key)
+                if(i < num):
+                    check_next_post(all_posts[i]['key'])
+                    i = i + 1
 
                 # Fetching datetime and url as key
                 ele_a_datetime = browser.find_one(".eo2As .c-Yi7")
@@ -325,9 +331,6 @@ class InsCrawler(Logging):
             dict_posts[browser.current_url] = dict_post
 
             pbar.update(1)
-            left_arrow = browser.find_one(".HBoOv")
-            if left_arrow:
-                left_arrow.click()
 
         pbar.close()
         posts = list(dict_posts.values())
