@@ -163,7 +163,7 @@ def fetch_comments(browser, dict_post):
     for els_comment in ele_comments[1:]:
         comment_obj = {}
 
-        author = browser.find_one(".FPmhX", els_comment).text
+        author = browser.find_one(".sqdOP.yWX7d._8A5w5.ZIAjV", els_comment).text
         comment_obj["author"] = author
 
         if settings.fetch_likers:
