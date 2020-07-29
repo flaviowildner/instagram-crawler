@@ -164,12 +164,13 @@ def fetch_comments(browser, dict_post):
         comment_obj = {}
 
         author = browser.find_one(".sqdOP.yWX7d._8A5w5.ZIAjV", els_comment).text
+        #author = browser.find_one(".FPmhX", els_comment).text
         comment_obj["author"] = author
 
         if settings.fetch_likers:
             likers_list = []
             likers_btn = browser.find_one('._7UhW9 button', els_comment)
-            if 'like' in likers_btn.text:
+            if ('like' in likers_btn.text or 'curtida' in likers_btn.text):
                 likers_btn.click()
 
                 likers = {}
