@@ -273,14 +273,26 @@ class Persist():
     def persistLikeOnPost(self, id_profile, id_post):
         if self.db is None:
             return
-        sql = """
+        
+        try:
+            sql = """
             INSERT INTO like_on_post(id_profile, id_post, created_at, last_visit, deleted)
             VALUES(%s, %s, %s, %s, %s);
-        """
-        cur = self.db.cursor()
-        cur.execute(sql, (id_profile, id_post, int(
-            datetime.now().timestamp()), int(datetime.now().timestamp()), False))
-        self.db.commit()
+            """
+            cur = self.db.cursor()
+            cur.execute(sql, (id_profile, id_post, int(
+                datetime.now().timestamp()), int(datetime.now().timestamp()), False))
+            self.db.commit()
+        except:
+            self.db.rollback()
+
+            sql = """
+            UPDATE like_on_post SET last_visit = %s
+            WHERE id_profile = %s AND id_post = %s;
+            """
+            cur = self.db.cursor()
+            cur.execute(sql, (int(datetime.now().timestamp()), id_profile, id_post))
+            self.db.commit()
         cur.close()
 
     def get_profiles_to_crawl(self, params={"list_size":10,"sql_mode":"last_visit" }):
