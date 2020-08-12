@@ -238,9 +238,9 @@ class Persist():
         else:
             sql = """
                 UPDATE post SET last_visit = %s
-                WHERE Id = %s;
+                WHERE id = %s;
             """
-            cur.execute(sql, (post['id_post'], int(datetime.now().timestamp())))
+            cur.execute(sql, (int(datetime.now().timestamp()), post['id_post']))
 
         self.db.commit()
         cur.close()
