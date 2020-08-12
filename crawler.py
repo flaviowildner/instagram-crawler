@@ -83,6 +83,8 @@ def get_post_full(username, number = None, debug = False, ins_crawler = None):
 
     for post in posts:
         post['id_profile'] = id_profile
+        post['id_post'] = persist.getPostIdByUrl(post['key'])
+
         persist.persistPost(post)
 
         for comment in post['comments'] if 'comments' in post.keys() else []:

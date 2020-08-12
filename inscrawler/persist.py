@@ -39,6 +39,7 @@ class Persist():
                 post_date BIGINT,
                 caption TEXT,
                 last_visit BIGINT,
+                created_at BIGINT,
                 deleted BOOLEAN,
                 PRIMARY KEY (id)
             );
@@ -224,14 +225,23 @@ class Persist():
     def persistPost(self, post):
         if self.db is None:
             return
-        sql = """
-            INSERT INTO post(id_profile, url, url_imgs, post_date, caption, last_visit, deleted)
-            VALUES(%s, %s, %s, %s, %s, %s, %s);
-        """
+        
         cur = self.db.cursor()
+        if post['id_post'] is None:
+            sql = """
+                INSERT INTO post(id_profile, url, url_imgs, post_date, caption, last_visit, deleted, created_at)
+                VALUES(%s, %s, %s, %s, %s, %s, %s, %s);
+            """
 
-        cur.execute(sql, (post['id_profile'], post['key'], ",".join(post['img_urls']), int(dateutil.parser.parse(post['datetime']).timestamp()),
-                          post['caption'], int(datetime.now().timestamp()), False))
+            cur.execute(sql, (post['id_profile'], post['key'], ",".join(post['img_urls']), int(dateutil.parser.parse(post['datetime']).timestamp()),
+                            post['caption'], int(datetime.now().timestamp()), False, int(datetime.now().timestamp())))
+        else:
+            sql = """
+                UPDATE post SET last_visit = %s
+                WHERE Id = %s;
+            """
+            cur.execute(sql, (post['id_post'], int(datetime.now().timestamp())))
+
         self.db.commit()
         cur.close()
 
