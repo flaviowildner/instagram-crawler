@@ -3,19 +3,15 @@ from __future__ import unicode_literals
 
 import argparse
 import json
+import logging
 import sys
-from io import open
 from datetime import datetime
+from io import open
 
 from inscrawler import InsCrawler
+from inscrawler.persist import Persist
 from inscrawler.settings import override_settings
 from inscrawler.settings import prepare_override_settings
-
-from inscrawler.persist import Persist
-import dateutil.parser
-
-import inscrawler.logger
-import logging
 
 
 def usage():
@@ -30,7 +26,7 @@ def usage():
     """
 
 
-def get_posts_by_user(username, number, detail, debug, ins_crawler = None):
+def get_posts_by_user(username, number, detail, debug, ins_crawler=None):
     if ins_crawler is None:
         ins_crawler = InsCrawler(has_screen=debug)
         ins_crawler.login()
@@ -69,7 +65,7 @@ def output(data, filepath):
         print(out)
 
 
-def get_post_full(username, number = None, debug = False, ins_crawler = None):
+def get_post_full(username, number=None, debug=False, ins_crawler=None):
     posts = get_posts_by_user(
         username, number, True, debug, ins_crawler
     )
@@ -79,7 +75,7 @@ def get_post_full(username, number = None, debug = False, ins_crawler = None):
 
     if id_profile is None:
         id_profile = persist.addProfile(username)
-        #raise Exception('The profile of specified username does not exist')
+        # raise Exception('The profile of specified username does not exist')
 
     for post in posts:
         post['id_profile'] = id_profile
@@ -92,10 +88,10 @@ def get_post_full(username, number = None, debug = False, ins_crawler = None):
             id_profile = persist.getUserIdByUsername(author)
             if id_profile is None:
                 id_profile = persist.addProfile(author)
-                #profile = get_profile(author)
-                #profile['username'] = author
+                # profile = get_profile(author)
+                # profile['username'] = author
                 # persist.persistProfile(profile)
-                #id_profile = persist.getUserIdByUsername(author)
+                # id_profile = persist.getUserIdByUsername(author)
 
             id_post = persist.getPostIdByUrl(post['key'])
 
@@ -111,11 +107,11 @@ def get_post_full(username, number = None, debug = False, ins_crawler = None):
             for liker in comment['likers'] if 'likers' in comment.keys() else []:
                 id_profile = persist.getUserIdByUsername(liker)
                 if id_profile is None:
-                    #profile = get_profile(liker)
-                    #profile['username'] = liker
+                    # profile = get_profile(liker)
+                    # profile['username'] = liker
                     # persist.persistProfile(profile)
                     id_profile = persist.addProfile(liker)
-                    #id_profile = persist.getUserIdByUsername(liker)
+                    # id_profile = persist.getUserIdByUsername(liker)
 
                 persist.persistLikeOnComment(id_profile, id_comment)
 
@@ -123,10 +119,10 @@ def get_post_full(username, number = None, debug = False, ins_crawler = None):
             id_profile = persist.getUserIdByUsername(liker)
             if id_profile is None:
                 id_profile = persist.addProfile(liker)
-                #profile = get_profile(liker)
-                #profile['username'] = liker
+                # profile = get_profile(liker)
+                # profile['username'] = liker
                 # persist.persistProfile(profile)
-                #id_profile = persist.getUserIdByUsername(liker)
+                # id_profile = persist.getUserIdByUsername(liker)
 
             id_post = persist.getPostIdByUrl(post['key'])
 
@@ -162,7 +158,7 @@ if __name__ == "__main__":
         arg_required("username")
         posts = get_post_full(args.username, args.number, args.debug)
 
-        output(posts, args.output,)
+        output(posts, args.output, )
 
     elif args.mode == "profile":
         arg_required("username")
@@ -188,7 +184,7 @@ if __name__ == "__main__":
             persist.updateProfile(profile)
 
         # Check for missing followers in database and persist them
-        #missing_profile_usernames = persist.getMissingProfiles(profile['followers'])
+        # missing_profile_usernames = persist.getMissingProfiles(profile['followers'])
         # for missed_username in missing_profile_usernames:
         #    missed_profile = ins_crawler.get_user_profile(missed_username, False)
         #    missed_profile['username'] = missed_username
@@ -240,7 +236,7 @@ if __name__ == "__main__":
 
                     persist.persistFollowing(profile)
 
-                get_post_full(username,None,args.debug, ins_crawler)
+                get_post_full(username, None, args.debug, ins_crawler)
 
         print('Updated')
 

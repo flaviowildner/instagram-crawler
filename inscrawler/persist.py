@@ -1,4 +1,4 @@
-from .database.postgres import connect
+from inscrawler.persistence.database.postgres import connect
 from datetime import datetime
 import dateutil.parser
 

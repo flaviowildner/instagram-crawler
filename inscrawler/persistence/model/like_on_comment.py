@@ -1,8 +1,8 @@
 from peewee import BigIntegerField, BooleanField, ForeignKeyField, CompositeKey
 
-from inscrawler.repository import Comment
-from inscrawler.repository.base_model import BaseModel
-from inscrawler.repository.profile import Profile
+from inscrawler.persistence.model.base_model import BaseModel
+from inscrawler.persistence.model.comment import Comment
+from inscrawler.persistence.model.profile import Profile
 
 
 class LikeOnComment(BaseModel):

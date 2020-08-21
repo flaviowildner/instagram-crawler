@@ -1,11 +1,12 @@
 from peewee import AutoField, TextField, IntegerField, BigIntegerField, BooleanField
 
-from inscrawler.repository.base_model import BaseModel
+from inscrawler.persistence.model.base_model import BaseModel
 
 
 class Profile(BaseModel):
     id = AutoField()
     username = TextField()
+    name = TextField()
     description = TextField()
     n_followers = IntegerField()
     n_following = IntegerField()

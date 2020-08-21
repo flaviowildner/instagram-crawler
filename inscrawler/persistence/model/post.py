@@ -1,7 +1,7 @@
 from peewee import AutoField, TextField, BigIntegerField, BooleanField, ForeignKeyField
 
-from inscrawler.repository.base_model import BaseModel
-from inscrawler.repository.profile import Profile
+from inscrawler.persistence.model.base_model import BaseModel
+from inscrawler.persistence.model.profile import Profile
 
 
 class Post(BaseModel):
