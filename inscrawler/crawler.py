@@ -9,26 +9,25 @@ import time
 import traceback
 from builtins import open
 from time import sleep
-from datetime import datetime
-import dateutil.parser
 
 from tqdm import tqdm
 
 from . import secret
 from .browser import Browser
+from .constants.html_classes.user_profile import PROFILE_NAME, PROFILE_DESCRIPTION, PROFILE_PUBLIC_ACCOUNT_PHOTO, \
+    PROFILE_PRIVATE_ACCOUNT_PHOTO
 from .exceptions import RetryException
 from .fetch import fetch_caption
 from .fetch import fetch_comments
 from .fetch import fetch_datetime
+from .fetch import fetch_details
 from .fetch import fetch_imgs
 from .fetch import fetch_likers
 from .fetch import fetch_likes_plays
-from .fetch import fetch_details
+from .model.profile_data import ProfileData
 from .utils import instagram_int
 from .utils import randmized_sleep
 from .utils import retry
-
-from selenium import webdriver
 
 
 class Logging(object):
@@ -68,10 +67,10 @@ class InsCrawler(Logging):
     URL = "https://www.instagram.com"
     RETRY_LIMIT = 10
 
-    def __init__(self, has_screen=False):
+    def __init__(self, has_screen: bool = False):
         super(InsCrawler, self).__init__()
         self.browser = Browser(has_screen)
-        self.page_height = 0        
+        self.page_height = 0
 
     def _dismiss_login_prompt(self):
         ele_login = self.browser.find_one(".Ls00D .Szr5J")
@@ -80,7 +79,7 @@ class InsCrawler(Logging):
 
     def login(self):
         browser = self.browser
-        url = "%s/accounts/login/" % (InsCrawler.URL)
+        url = "%s/accounts/login/" % InsCrawler.URL
         browser.get(url)
         u_input = browser.find_one('input[name="username"]')
         u_input.send_keys(secret.username)
@@ -97,26 +96,26 @@ class InsCrawler(Logging):
 
         check_login()
 
-    def get_user_profile(self, username, follow_list_enabled=False):
+    def get_user_profile(self, username: str, follow_list_enabled: bool = False) -> ProfileData:
         browser = self.browser
         url = "%s/%s/" % (InsCrawler.URL, username)
         browser.get(url)
 
         try:
-            name = browser.find_one(".rhpdm").text
+            name = browser.find_one(PROFILE_NAME).text
         except AttributeError:
             name = ''
-        
+
         try:
-            desc = browser.find_one(".-vDIg > span").text
+            desc = browser.find_one(PROFILE_DESCRIPTION).text
         except AttributeError:
             desc = ''
 
         try:
-            photo = browser.find_one("._6q-tv").get_attribute("src")
+            photo = browser.find_one(PROFILE_PUBLIC_ACCOUNT_PHOTO).get_attribute("src")
         except AttributeError:
             try:
-                photo = browser.find_one(".be6sR").get_attribute("src") #Private profile
+                photo = browser.find_one(PROFILE_PRIVATE_ACCOUNT_PHOTO).get_attribute("src")  # Private profile
             except AttributeError:
                 photo = ''
 
@@ -146,7 +145,8 @@ class InsCrawler(Logging):
                 username_last_check = last_follower.get_attribute("title")
                 while follower_elems:
                     # Scroll down
-                    script = "document.querySelector(\".isgrP\").scrollTo(0, document.querySelector(\".isgrP\").scrollHeight);"
+                    script = "document.querySelector(\".isgrP\").scrollTo(0, document.querySelector(" \
+                             "\".isgrP\").scrollHeight); "
                     self.browser.driver.execute_script(script)
                     sleep(0.6)
 
@@ -171,7 +171,6 @@ class InsCrawler(Logging):
                 close_btn.click()
             except:
                 print('Private profile')
-
 
         return_obj = {
             "name": name,
@@ -271,7 +270,7 @@ class InsCrawler(Logging):
         browser.scroll_down()
         ele_post = browser.find_one(".v1Nh3 a")
 
-        #Return empty list for users without posts
+        # Return empty list for users without posts
         if ele_post is None:
             return list()
 
@@ -281,7 +280,6 @@ class InsCrawler(Logging):
         pbar = tqdm(total=num)
         pbar.set_description("fetching")
         cur_key = None
-
 
         # Fetching all posts
         for _ in range(num):
@@ -317,8 +315,8 @@ class InsCrawler(Logging):
                     "\x1b[1;31m" +
                     "Failed to fetch the post: " +
                     cur_key if isinstance(cur_key, str) else 'URL not fetched' +
-                                                               "\x1b[0m" +
-                                                               "\n"
+                                                             "\x1b[0m" +
+                                                             "\n"
                 )
                 traceback.print_exc()
 
