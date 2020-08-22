@@ -2,7 +2,7 @@ from inscrawler.model.profile import Profile
 from inscrawler.persistence.model.profile_entity import ProfileEntity
 
 
-def inset_profile(profile: Profile):
+def insert_profile(profile: Profile):
     profile_entity = ProfileEntity(username=profile.username,
                                    name=profile.name,
                                    description=profile.description,
