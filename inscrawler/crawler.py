@@ -24,7 +24,7 @@ from .fetch import fetch_details
 from .fetch import fetch_imgs
 from .fetch import fetch_likers
 from .fetch import fetch_likes_plays
-from .model.profile_data import ProfileData
+from .model.profile import Profile
 from .utils import instagram_int
 from .utils import randmized_sleep
 from .utils import retry
@@ -96,7 +96,7 @@ class InsCrawler(Logging):
 
         check_login()
 
-    def get_user_profile(self, username: str, follow_list_enabled: bool = False) -> ProfileData:
+    def get_user_profile(self, username: str, follow_list_enabled: bool = False) -> Profile:
         browser = self.browser
         url = "%s/%s/" % (InsCrawler.URL, username)
         browser.get(url)

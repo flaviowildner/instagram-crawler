@@ -1,7 +1,7 @@
 from typing import Union
 
 
-class ProfileData:
+class Profile:
     username: str
     name: str
     description: str

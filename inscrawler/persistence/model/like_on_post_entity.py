@@ -1,13 +1,13 @@
 from peewee import BigIntegerField, BooleanField, ForeignKeyField, CompositeKey
 
 from inscrawler.persistence.model.base_model import BaseModel
-from inscrawler.persistence.model.post import Post
-from inscrawler.persistence.model.profile import Profile
+from inscrawler.persistence.model.post_entity import PostEntity
+from inscrawler.persistence.model.profile_entity import ProfileEntity
 
 
 class LikeOnPost(BaseModel):
-    profile = ForeignKeyField(Profile)
-    post = ForeignKeyField(Post)
+    profile = ForeignKeyField(ProfileEntity)
+    post = ForeignKeyField(PostEntity)
     created_at = BigIntegerField()
     last_visit = BigIntegerField()
     deleted = BooleanField()

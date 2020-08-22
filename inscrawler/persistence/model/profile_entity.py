@@ -3,7 +3,7 @@ from peewee import AutoField, TextField, IntegerField, BigIntegerField, BooleanF
 from inscrawler.persistence.model.base_model import BaseModel
 
 
-class Profile(BaseModel):
+class ProfileEntity(BaseModel):
     id = AutoField()
     username = TextField()
     name = TextField()
@@ -16,3 +16,6 @@ class Profile(BaseModel):
     created_at = BigIntegerField()
     deleted = BooleanField()
     visited = BooleanField()
+
+    class Meta:
+        table_name = 'profile'
