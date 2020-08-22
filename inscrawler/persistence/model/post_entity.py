@@ -4,6 +4,7 @@ from inscrawler.persistence.model.base_model import BaseModel
 from inscrawler.persistence.model.profile_entity import ProfileEntity
 
 
+# TODO create indexes
 class PostEntity(BaseModel):
     id = AutoField()
     profile = ForeignKeyField(ProfileEntity)

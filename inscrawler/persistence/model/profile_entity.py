@@ -3,6 +3,7 @@ from peewee import AutoField, TextField, IntegerField, BigIntegerField, BooleanF
 from inscrawler.persistence.model.base_model import BaseModel
 
 
+# TODO create indexes
 class ProfileEntity(BaseModel):
     id = AutoField()
     username = TextField()

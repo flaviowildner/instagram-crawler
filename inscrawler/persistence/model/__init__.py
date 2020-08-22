@@ -9,7 +9,8 @@ from inscrawler.persistence.model.profile_entity import ProfileEntity
 
 
 def reset_db():
-    psql_db.drop_tables([ProfileEntity, PostEntity, CommentEntity, LikeOnPost, LikeOnCommentEntity, FollowingEntity], cascade=True)
+    psql_db.drop_tables([ProfileEntity, PostEntity, CommentEntity, LikeOnPost, LikeOnCommentEntity, FollowingEntity],
+                        cascade=True)
 
     ProfileEntity.create_table()
     PostEntity.create_table()

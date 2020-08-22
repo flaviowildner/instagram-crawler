@@ -5,6 +5,7 @@ from inscrawler.persistence.model.post_entity import PostEntity
 from inscrawler.persistence.model.profile_entity import ProfileEntity
 
 
+# TODO create indexes
 class LikeOnPost(BaseModel):
     profile = ForeignKeyField(ProfileEntity)
     post = ForeignKeyField(PostEntity)

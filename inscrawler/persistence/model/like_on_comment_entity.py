@@ -5,6 +5,7 @@ from inscrawler.persistence.model.comment_entity import CommentEntity
 from inscrawler.persistence.model.profile_entity import ProfileEntity
 
 
+# TODO create indexes
 class LikeOnCommentEntity(BaseModel):
     profile = ForeignKeyField(ProfileEntity)
     comment = ForeignKeyField(CommentEntity)
