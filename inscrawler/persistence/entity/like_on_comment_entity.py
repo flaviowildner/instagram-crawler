@@ -9,9 +9,9 @@ from inscrawler.persistence.entity.profile_entity import ProfileEntity
 class LikeOnCommentEntity(BaseModel):
     profile = ForeignKeyField(ProfileEntity)
     comment = ForeignKeyField(CommentEntity)
-    created_at = BigIntegerField()
-    last_visit = BigIntegerField()
-    deleted = BooleanField()
+    created_at = BigIntegerField(null=True)
+    last_visit = BigIntegerField(null=True)
+    deleted = BooleanField(null=True)
 
     class Meta:
         table_name = "like_on_comment"

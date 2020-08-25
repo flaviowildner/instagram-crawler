@@ -7,9 +7,9 @@ from inscrawler.persistence.entity.profile_entity import ProfileEntity
 
 # TODO create indexes
 class CommentEntity(BaseModel):
-    id = AutoField()
-    post = ForeignKeyField(PostEntity)
-    author = ForeignKeyField(ProfileEntity)
+    id = AutoField(null=False)
+    post = ForeignKeyField(PostEntity, null=True)
+    author = ForeignKeyField(ProfileEntity, null=True)
     comment = TextField(null=True)
     last_visit = BigIntegerField(null=True)
     comment_date = BigIntegerField(null=True)

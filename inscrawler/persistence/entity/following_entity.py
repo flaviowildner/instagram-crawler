@@ -8,9 +8,9 @@ from inscrawler.persistence.entity.profile_entity import ProfileEntity
 class FollowingEntity(BaseModel):
     followed = ForeignKeyField(ProfileEntity)
     follower = ForeignKeyField(ProfileEntity)
-    created_at = BigIntegerField()
-    last_visit = BigIntegerField()
-    deleted = BooleanField()
+    created_at = BigIntegerField(null=True)
+    last_visit = BigIntegerField(null=True)
+    deleted = BooleanField(null=True)
 
     class Meta:
         primary_key = CompositeKey('followed', 'follower')

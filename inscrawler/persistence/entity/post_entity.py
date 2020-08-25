@@ -6,9 +6,9 @@ from inscrawler.persistence.entity.profile_entity import ProfileEntity
 
 # TODO create indexes
 class PostEntity(BaseModel):
-    id = AutoField()
-    profile = ForeignKeyField(ProfileEntity)
-    url = TextField()
+    id = AutoField(null=False)
+    profile = ForeignKeyField(ProfileEntity, null=True)
+    url = TextField(null=True)
     url_imgs = TextField(null=True)
     post_date = BigIntegerField(null=True)
     caption = TextField(null=True)
