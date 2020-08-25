@@ -1,8 +1,8 @@
 from peewee import BigIntegerField, BooleanField, ForeignKeyField, CompositeKey
 
-from inscrawler.persistence.model.base_model import BaseModel
-from inscrawler.persistence.model.comment_entity import CommentEntity
-from inscrawler.persistence.model.profile_entity import ProfileEntity
+from inscrawler.persistence.entity.base_model import BaseModel
+from inscrawler.persistence.entity.comment_entity import CommentEntity
+from inscrawler.persistence.entity.profile_entity import ProfileEntity
 
 
 # TODO create indexes

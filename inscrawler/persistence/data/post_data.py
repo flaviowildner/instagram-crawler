@@ -1,5 +1,5 @@
 from inscrawler.model.post import Post
-from inscrawler.persistence.model.post_entity import PostEntity
+from inscrawler.persistence.entity.post_entity import PostEntity
 
 
 def inset_profile(post: Post):

@@ -1,5 +1,5 @@
 from inscrawler.model.profile import Profile
-from inscrawler.persistence.model.profile_entity import ProfileEntity
+from inscrawler.persistence.entity.profile_entity import ProfileEntity
 
 
 def insert_profile(profile: Profile):
