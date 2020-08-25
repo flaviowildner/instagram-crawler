@@ -6,7 +6,7 @@ from inscrawler.persistence.entity.base_model import BaseModel
 # TODO create indexes
 class ProfileEntity(BaseModel):
     id = AutoField(null=False)
-    username = TextField(null=False)
+    username = TextField(null=False, unique=True)
     name = TextField(null=True)
     description = TextField(null=True)
     n_followers = IntegerField(null=True)
