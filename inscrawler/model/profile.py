@@ -1,30 +1,33 @@
-from typing import Union
+from typing import Optional
 
 
 class Profile:
-    username: str
-    name: str
-    description: str
-    n_followers: int
-    n_following: int
-    n_posts: int
-    photo_url: str
-    last_visit: Union[int, None]
-    created_at: Union[int, None]
-    deleted: Union[bool, None]
-    visited: Union[bool, None]
+    id_: Optional[int]
+    username: Optional[str]
+    name: Optional[str]
+    description: Optional[str]
+    n_followers: Optional[int]
+    n_following: Optional[int]
+    n_posts: Optional[int]
+    photo_url: Optional[str]
+    last_visit: Optional[int]
+    created_at: Optional[int]
+    deleted: Optional[bool]
+    visited: Optional[bool]
 
-    def __init__(self, username: str,
-                 name: str,
-                 description: str,
-                 n_followers: int,
-                 n_following: int,
-                 n_posts: int,
-                 photo_url: str,
-                 last_visit: Union[int, None],
-                 created_at: Union[int, None],
-                 deleted: Union[bool, None],
-                 visited: Union[bool, None]) -> None:
+    def __init__(self, id_: Optional[int],
+                 username: Optional[str],
+                 name: Optional[str],
+                 description: Optional[str],
+                 n_followers: Optional[int],
+                 n_following: Optional[int],
+                 n_posts: Optional[int],
+                 photo_url: Optional[str],
+                 last_visit: Optional[int],
+                 created_at: Optional[int],
+                 deleted: Optional[bool],
+                 visited: Optional[bool]) -> None:
+        self.id_ = id_
         self.username = username
         self.name = name
         self.description = description

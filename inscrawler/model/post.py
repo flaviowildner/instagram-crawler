@@ -1,25 +1,30 @@
-from typing import Union
+from typing import Optional
+
+from inscrawler.model.profile import Profile
 
 
 class Post:
-    profile_id: int
-    url: str
-    url_imgs: str
-    post_date: int
-    caption: Union[str, None]
-    last_visit: Union[int, None]
-    created_at: Union[int, None]
-    deleted: Union[bool, None]
+    id_: Optional[int]
+    profile: Optional[Profile]
+    url: Optional[str]
+    url_imgs: Optional[str]
+    post_date: Optional[int]
+    caption: Optional[str]
+    last_visit: Optional[int]
+    created_at: Optional[int]
+    deleted: Optional[bool]
 
-    def __init__(self, profile_id: int,
-                 url: str,
-                 url_imgs: str,
-                 post_date: int,
-                 caption: str,
-                 last_visit: Union[int, None],
-                 created_at: Union[int, None],
-                 deleted: Union[bool, None]) -> None:
-        self.profile_id = profile_id
+    def __init__(self, id_: Optional[int],
+                 profile: Optional[Profile],
+                 url: Optional[str],
+                 url_imgs: Optional[str],
+                 post_date: Optional[int],
+                 caption: Optional[str],
+                 last_visit: Optional[int],
+                 created_at: Optional[int],
+                 deleted: Optional[bool]) -> None:
+        self.id_ = id_
+        self.profile = profile
         self.url = url
         self.url_imgs = url_imgs
         self.post_date = post_date

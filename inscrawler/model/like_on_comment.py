@@ -1,20 +1,23 @@
-from typing import Union
+from typing import Optional
+
+from inscrawler.model.post import Post
+from inscrawler.model.profile import Profile
 
 
 class LikeOnPost:
-    profile_id: int
-    comment_id: int
-    created_at: Union[int, None]
-    last_visit: Union[int, None]
-    deleted: Union[bool, None]
+    profile: Optional[Profile]
+    post: Optional[Post]
+    created_at: Optional[int]
+    last_visit: Optional[int]
+    deleted: Optional[bool]
 
-    def __init__(self, profile_id: int,
-                 post_id: int,
-                 created_at: Union[int, None],
-                 last_visit: Union[int, None],
-                 deleted: Union[bool, None]) -> None:
-        self.profile_id = profile_id
-        self.comment_id = post_id
+    def __init__(self, profile: Optional[Profile],
+                 post: Optional[Post],
+                 created_at: Optional[int],
+                 last_visit: Optional[int],
+                 deleted: Optional[bool]) -> None:
+        self.profile = profile
+        self.post = post
         self.created_at = created_at
         self.last_visit = last_visit
         self.deleted = deleted

@@ -1,18 +1,20 @@
-from typing import Union
+from typing import Optional
+
+from inscrawler.model.profile import Profile
 
 
 class Following:
-    followed: int
-    follower: int
-    created_at: Union[int, None]
-    last_visit: Union[int, None]
-    deleted: Union[bool, None]
+    followed: Optional[Profile]
+    follower: Optional[Profile]
+    created_at: Optional[int]
+    last_visit: Optional[int]
+    deleted: Optional[bool]
 
-    def __init__(self, followed: int,
-                 follower: int,
-                 created_at: Union[int, None],
-                 last_visit: Union[int, None],
-                 deleted: Union[bool, None]) -> None:
+    def __init__(self, followed: Optional[Profile],
+                 follower: Optional[Profile],
+                 created_at: Optional[int],
+                 last_visit: Optional[int],
+                 deleted: Optional[bool]) -> None:
         self.followed = followed
         self.follower = follower
         self.created_at = created_at
