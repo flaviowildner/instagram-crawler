@@ -1,6 +1,10 @@
+from datetime import datetime
 from typing import Optional, List
 
+import inscrawler.persistence.data.post_data as post_data
+import inscrawler.persistence.data.profile_data as profile_data
 from inscrawler.model.comment import Comment
+from inscrawler.model.post import Post
 from inscrawler.persistence.entity import CommentEntity
 
 
@@ -18,8 +22,22 @@ def get_by_author_and_date(author_id: int, comment_date: int) -> Optional[Commen
     return from_entity(comment_entity)
 
 
-def update(comment: Comment):
-    comment_entity: CommentEntity = to_entity(comment)
+def create_or_update_comment(comment: Comment, post: Post):
+    comment_on_db: CommentEntity = \
+        CommentEntity.get_or_create(post=post_data.to_entity(post), author=profile_data.to_entity(comment.author),
+                                    comment_date=comment.comment_date)[0]
+
+    now = int(datetime.now().timestamp())
+    if comment_on_db.created_at is None:
+        comment.created_at = now
+    else:
+        comment.created_at = comment_on_db.created_at
+
+    comment.last_visit = now
+
+    comment.id_ = comment_on_db.id
+    comment_entity: CommentEntity = to_entity(comment, post)
+
     comment_entity.save()
 
 
@@ -32,14 +50,14 @@ def get_comments_by_post(post_id: int) -> List[Comment]:
     return return_list
 
 
-def create(comment: Comment):
-    CommentEntity.insert(to_entity(comment))
+def create(comment: Comment, post: Post):
+    CommentEntity.insert(to_entity(comment, post))
 
 
-def to_entity(comment: Comment) -> CommentEntity:
+def to_entity(comment: Comment, post: Post) -> CommentEntity:
     return CommentEntity(id=comment.id_,
-                         post=comment.post,
-                         author=comment.author,
+                         post=post_data.to_entity(post),
+                         author=profile_data.to_entity(comment.author),
                          comment=comment.comment,
                          last_visit=comment.last_visit,
                          comment_date=comment.comment_date,
@@ -49,7 +67,7 @@ def to_entity(comment: Comment) -> CommentEntity:
 
 def from_entity(comment_entity: CommentEntity) -> Comment:
     return Comment(id_=comment_entity.id,
-                   post=comment_entity.post,
+                   # post=comment_entity.post,
                    author=comment_entity.author,
                    comment=comment_entity.comment,
                    last_visit=comment_entity.last_visit,

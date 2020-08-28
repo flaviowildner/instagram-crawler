@@ -6,7 +6,7 @@ from inscrawler.persistence.entity.profile_entity import ProfileEntity
 
 
 # TODO create indexes
-class LikeOnPost(BaseModel):
+class LikeOnPostEntity(BaseModel):
     profile = ForeignKeyField(ProfileEntity)
     post = ForeignKeyField(PostEntity)
     created_at = BigIntegerField(null=True)

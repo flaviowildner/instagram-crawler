@@ -11,6 +11,7 @@ class CommentEntity(BaseModel):
     post = ForeignKeyField(PostEntity, null=True)
     author = ForeignKeyField(ProfileEntity, null=True)
     comment = TextField(null=True)
+    created_at = BigIntegerField(null=True)
     last_visit = BigIntegerField(null=True)
     comment_date = BigIntegerField(null=True)
     deleted = BooleanField(null=True)

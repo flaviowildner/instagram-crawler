@@ -7,9 +7,14 @@ import logging
 import sys
 from datetime import datetime
 from io import open
+from typing import List
 
 from inscrawler import InsCrawler
+from inscrawler.model.post import Post
+from inscrawler.model.profile import Profile
 from inscrawler.persist import Persist
+from inscrawler.persistence.data.post_data import save_post
+from inscrawler.persistence.data.profile_data import get_or_create_profile
 from inscrawler.settings import override_settings
 from inscrawler.settings import prepare_override_settings
 
@@ -66,70 +71,14 @@ def output(data, filepath):
 
 
 def get_post_full(username, number=None, debug=False, ins_crawler=None):
-    posts = get_posts_by_user(
-        username, number, True, debug, ins_crawler
-    )
+    posts: List[Post] = get_posts_by_user(username, number, True, debug, ins_crawler)
 
-    persist = Persist()
-    id_profile = persist.getUserIdByUsername(username)
-
-    if id_profile is None:
-        id_profile = persist.addProfile(username)
-        # raise Exception('The profile of specified username does not exist')
+    profile: Profile = get_or_create_profile(username)
 
     for post in posts:
-        post['id_profile'] = id_profile
-        post['id_post'] = persist.getPostIdByUrl(post['key'])
+        post.profile = profile
+        save_post(post)
 
-        persist.persistPost(post)
-
-        for comment in post['comments'] if 'comments' in post.keys() else []:
-            author = comment['author']
-            id_profile = persist.getUserIdByUsername(author)
-            if id_profile is None:
-                id_profile = persist.addProfile(author)
-                # profile = get_profile(author)
-                # profile['username'] = author
-                # persist.persistProfile(profile)
-                # id_profile = persist.getUserIdByUsername(author)
-
-            id_post = persist.getPostIdByUrl(post['key'])
-
-            comment['id_author'] = id_profile
-            comment['id_post'] = id_post
-
-            if id_post is None:
-                raise Exception('The specified post does not exist')
-
-            id_comment = persist.getNextSequenceId('comment_id_seq')
-            persist.persistComment(comment, None, id_comment)
-
-            for liker in comment['likers'] if 'likers' in comment.keys() else []:
-                id_profile = persist.getUserIdByUsername(liker)
-                if id_profile is None:
-                    # profile = get_profile(liker)
-                    # profile['username'] = liker
-                    # persist.persistProfile(profile)
-                    id_profile = persist.addProfile(liker)
-                    # id_profile = persist.getUserIdByUsername(liker)
-
-                persist.persistLikeOnComment(id_profile, id_comment)
-
-        for liker in post['likers'] if 'likers' in post.keys() else []:
-            id_profile = persist.getUserIdByUsername(liker)
-            if id_profile is None:
-                id_profile = persist.addProfile(liker)
-                # profile = get_profile(liker)
-                # profile['username'] = liker
-                # persist.persistProfile(profile)
-                # id_profile = persist.getUserIdByUsername(liker)
-
-            id_post = persist.getPostIdByUrl(post['key'])
-
-            if id_post is None:
-                raise Exception('The specified post does not exist')
-
-            persist.persistLikeOnPost(id_profile, id_post)
     return posts
 
 
@@ -158,7 +107,7 @@ if __name__ == "__main__":
         arg_required("username")
         posts = get_post_full(args.username, args.number, args.debug)
 
-        output(posts, args.output, )
+        # output(posts, args.output, )
 
     elif args.mode == "profile":
         arg_required("username")
@@ -168,7 +117,7 @@ if __name__ == "__main__":
         profile = ins_crawler.get_user_profile(args.username, True)
         profile['capture_time'] = int(datetime.now().timestamp())
 
-        output(profile, args.output)
+        # output(profile, args.output)
         persist = Persist()
         profile["username"] = args.username
         try:
@@ -199,13 +148,13 @@ if __name__ == "__main__":
 
     elif args.mode == "profile_script":
         arg_required("username")
-        output(get_profile_from_script(args.username), args.output)
+        # output(get_profile_from_script(args.username), args.output)
     elif args.mode == "hashtag":
         arg_required("tag")
-        output(
-            get_posts_by_hashtag(
-                args.tag, args.number or 100, args.debug), args.output
-        )
+        # output(
+        #     get_posts_by_hashtag(
+        #         args.tag, args.number or 100, args.debug), args.output
+        # )
     elif args.mode == "crawler":
         ins_crawler = InsCrawler(has_screen=args.debug)
         ins_crawler.login()

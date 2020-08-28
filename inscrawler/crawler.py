@@ -9,6 +9,7 @@ import time
 import traceback
 from builtins import open
 from time import sleep
+from typing import List
 
 from tqdm import tqdm
 
@@ -24,6 +25,7 @@ from .fetch import fetch_details
 from .fetch import fetch_imgs
 from .fetch import fetch_likers
 from .fetch import fetch_likes_plays
+from .model.post import Post
 from .model.profile import Profile
 from .utils import instagram_int
 from .utils import randmized_sleep
@@ -275,7 +277,7 @@ class InsCrawler(Logging):
             return list()
 
         ele_post.click()
-        dict_posts = {}
+        posts: List[Post] = []
 
         pbar = tqdm(total=num)
         pbar.set_description("fetching")
@@ -284,6 +286,7 @@ class InsCrawler(Logging):
         # Fetching all posts
         for _ in range(num):
             dict_post = {}
+            post: Post = Post()
 
             # Fetching post detail
             try:
@@ -292,13 +295,13 @@ class InsCrawler(Logging):
                 # Fetching datetime and url as key
                 ele_a_datetime = browser.find_one(".eo2As .c-Yi7")
                 cur_key = ele_a_datetime.get_attribute("href")
-                dict_post["key"] = cur_key
-                fetch_datetime(browser, dict_post)
-                fetch_imgs(browser, dict_post)
-                fetch_likes_plays(browser, dict_post)
-                fetch_likers(browser, dict_post)
-                fetch_caption(browser, dict_post)
-                fetch_comments(browser, dict_post)
+                post.url = cur_key
+                fetch_datetime(browser, post)
+                fetch_imgs(browser, post)
+                fetch_likes_plays(browser, post)
+                fetch_likers(browser, post)
+                fetch_caption(browser, post)
+                fetch_comments(browser, post)
 
             except RetryException:
                 sys.stderr.write(
@@ -320,8 +323,9 @@ class InsCrawler(Logging):
                 )
                 traceback.print_exc()
 
-            self.log(json.dumps(dict_post, ensure_ascii=False))
-            dict_posts[browser.current_url] = dict_post
+            # self.log(json.dumps(post, ensure_ascii=False))
+
+            posts.append(post)
 
             pbar.update(1)
             right_arrow = browser.find_one("._65Bje")
@@ -329,9 +333,8 @@ class InsCrawler(Logging):
                 right_arrow.click()
 
         pbar.close()
-        posts = list(dict_posts.values())
         if posts:
-            posts.sort(key=lambda post: post["datetime"], reverse=True)
+            posts.sort(key=lambda post: post.post_date, reverse=True)
 
         return posts
 
