@@ -5,6 +5,7 @@ import inscrawler.persistence.data.post_data as post_data
 import inscrawler.persistence.data.profile_data as profile_data
 from inscrawler.model.comment import Comment
 from inscrawler.model.post import Post
+from inscrawler.persistence.data.like_on_comment_data import create_or_update_like_on_comment
 from inscrawler.persistence.entity import CommentEntity
 
 
@@ -39,6 +40,9 @@ def create_or_update_comment(comment: Comment, post: Post):
     comment_entity: CommentEntity = to_entity(comment, post)
 
     comment_entity.save()
+
+    for comment_liker in comment.likers:
+        create_or_update_like_on_comment(comment, post, comment_liker)
 
 
 def get_comments_by_post(post_id: int) -> List[Comment]:

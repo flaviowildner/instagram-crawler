@@ -2,8 +2,8 @@ from datetime import datetime
 
 import inscrawler.persistence.data.comment_data as comment_data
 import inscrawler.persistence.data.profile_data as profile_data
+import inscrawler.persistence.data.like_on_post_data as like_on_post_data
 from inscrawler.model.post import Post
-from inscrawler.persistence.data.like_on_post_data import create_or_update_like_on_post
 from inscrawler.persistence.entity.post_entity import PostEntity
 
 
@@ -27,7 +27,7 @@ def save_post(post: Post):
         comment_data.create_or_update_comment(comment, post)
 
     for profile in post.likers:
-        create_or_update_like_on_post(post, profile)
+        like_on_post_data.create_or_update_like_on_post(post, profile)
 
 
 def get_or_create_post(url: str) -> Post:
