@@ -26,3 +26,4 @@ inscrawler/bin/*
 !inscrawler/bin/.keep
 output
 .idea
+venv
