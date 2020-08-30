@@ -15,8 +15,8 @@ from tqdm import tqdm
 
 from . import secret
 from .browser import Browser
-from .constants.html_classes.user_profile import PROFILE_NAME, PROFILE_DESCRIPTION, PROFILE_PUBLIC_ACCOUNT_PHOTO, \
-    PROFILE_PRIVATE_ACCOUNT_PHOTO
+from .constants.html_selectors import PROFILE_NAME, PROFILE_DESCRIPTION, PROFILE_PUBLIC_ACCOUNT_PHOTO, \
+    PROFILE_PRIVATE_ACCOUNT_PHOTO, PROFILE_STATISTICS, PROFILE_FOLLOWERS_ELEMENTS
 from .exceptions import RetryException
 from .fetch import fetch_caption
 from .fetch import fetch_comments
@@ -121,7 +121,7 @@ class InsCrawler(Logging):
             except AttributeError:
                 photo = ''
 
-        statistics = browser.find(".g47SY")
+        statistics = browser.find(PROFILE_STATISTICS)
 
         post_num = statistics[0].text.replace(",", "")
         follower_num = statistics[1].get_attribute("title").replace(",", "")
@@ -132,7 +132,7 @@ class InsCrawler(Logging):
             follower_btn = statistics[1]
             follower_btn.click()
 
-            follower_elems_css_selector = ".RnEpo.Yx5HN .isgrP .PZuss .FPmhX"
+            follower_elems_css_selector = PROFILE_FOLLOWERS_ELEMENTS
             try:
                 follower_elems = list(browser.find(follower_elems_css_selector, waittime=0.6))
 
