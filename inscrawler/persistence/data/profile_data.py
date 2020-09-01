@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from inscrawler.model.profile import Profile
+from inscrawler.persistence.data.following_data import create_or_update_following
 from inscrawler.persistence.entity.profile_entity import ProfileEntity
 
 
@@ -19,6 +20,9 @@ def create_or_update_profile(profile: Profile):
     profile_entity: ProfileEntity = to_entity(profile)
 
     profile_entity.save()
+
+    for follower in profile.followers:
+        create_or_update_following(follower, profile)
 
 
 def get_or_create_profile(username: str) -> Profile:

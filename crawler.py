@@ -14,7 +14,7 @@ from inscrawler.model.post import Post
 from inscrawler.model.profile import Profile
 from inscrawler.persist import Persist
 from inscrawler.persistence.data.post_data import save_post
-from inscrawler.persistence.data.profile_data import get_or_create_profile
+from inscrawler.persistence.data.profile_data import get_or_create_profile, create_or_update_profile
 from inscrawler.settings import override_settings
 from inscrawler.settings import prepare_override_settings
 
@@ -115,36 +115,8 @@ if __name__ == "__main__":
         ins_crawler = InsCrawler(has_screen=args.debug)
         ins_crawler.login()
         profile = ins_crawler.get_user_profile(args.username, True)
-        profile['capture_time'] = int(datetime.now().timestamp())
 
-        # output(profile, args.output)
-        persist = Persist()
-        profile["username"] = args.username
-        try:
-            persist.persistProfile(profile)
-        except:
-            persist.db.rollback()
-            id_profile = persist.getUserIdByUsername(args.username)
-            if id_profile is None:
-                logger.error('The profile of specified username does not exist')
-                raise Exception('The profile of specified username does not exist')
-
-            profile['id'] = id_profile
-            persist.updateProfile(profile)
-
-        # Check for missing followers in database and persist them
-        # missing_profile_usernames = persist.getMissingProfiles(profile['followers'])
-        # for missed_username in missing_profile_usernames:
-        #    missed_profile = ins_crawler.get_user_profile(missed_username, False)
-        #    missed_profile['username'] = missed_username
-        #    persist.persistProfile(missed_profile)
-
-        missing_profile_usernames = persist.getMissingProfiles(
-            profile['followers'])
-        for missed_username in missing_profile_usernames:
-            persist.addProfile(missed_username)
-
-        persist.persistFollowing(profile)
+        create_or_update_profile(profile)
 
     elif args.mode == "profile_script":
         arg_required("username")

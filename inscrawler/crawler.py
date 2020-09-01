@@ -16,7 +16,8 @@ from tqdm import tqdm
 from . import secret
 from .browser import Browser
 from .constants.html_selectors import PROFILE_NAME, PROFILE_DESCRIPTION, PROFILE_PUBLIC_ACCOUNT_PHOTO, \
-    PROFILE_PRIVATE_ACCOUNT_PHOTO, PROFILE_STATISTICS, PROFILE_FOLLOWERS_ELEMENTS
+    PROFILE_PRIVATE_ACCOUNT_PHOTO, PROFILE_STATISTICS, PROFILE_FOLLOWERS_ELEMENTS, FOLLOWERS_SCROLL_DOWN, \
+    FOLLOWERS_LAST_PROFILE
 from .exceptions import RetryException
 from .fetch import fetch_caption
 from .fetch import fetch_comments
@@ -27,6 +28,7 @@ from .fetch import fetch_likers
 from .fetch import fetch_likes_plays
 from .model.post import Post
 from .model.profile import Profile
+from .persistence.data.profile_data import get_or_create_profile
 from .utils import instagram_int
 from .utils import randmized_sleep
 from .utils import retry
@@ -103,59 +105,40 @@ class InsCrawler(Logging):
         url = "%s/%s/" % (InsCrawler.URL, username)
         browser.get(url)
 
-        try:
-            name = browser.find_one(PROFILE_NAME).text
-        except AttributeError:
-            name = ''
+        name: str = self.__get_profile_name()
+        description: str = self.__get_profile_description()
+        photo: str = self.__get_photo_url()
 
-        try:
-            desc = browser.find_one(PROFILE_DESCRIPTION).text
-        except AttributeError:
-            desc = ''
+        statistics_elem = self.browser.find(PROFILE_STATISTICS)
+        post_num_elem = statistics_elem[0]
+        follower_elem = statistics_elem[1]
+        following_elem = statistics_elem[2]
 
-        try:
-            photo = browser.find_one(PROFILE_PUBLIC_ACCOUNT_PHOTO).get_attribute("src")
-        except AttributeError:
-            try:
-                photo = browser.find_one(PROFILE_PRIVATE_ACCOUNT_PHOTO).get_attribute("src")  # Private profile
-            except AttributeError:
-                photo = ''
-
-        statistics = browser.find(PROFILE_STATISTICS)
-
-        post_num = statistics[0].text.replace(",", "")
-        follower_num = statistics[1].get_attribute("title").replace(",", "")
-        following_num = statistics[2].text.replace(",", "")
+        post_num, follower_num, following_num = self.get_user_statistics(statistics_elem)
 
         followers = None
         if follow_list_enabled:
-            follower_btn = statistics[1]
+            follower_btn = follower_elem
             follower_btn.click()
 
-            follower_elems_css_selector = PROFILE_FOLLOWERS_ELEMENTS
             try:
-                follower_elems = list(browser.find(follower_elems_css_selector, waittime=0.6))
-
-                username_last_check = None
-                current_username = None
+                follower_elems = list(browser.find(PROFILE_FOLLOWERS_ELEMENTS, waittime=0.6))
 
                 follower_elems[-1].location_once_scrolled_into_view
                 sleep(0.6)
 
-                follower_elems = list(browser.find(follower_elems_css_selector))
+                follower_elems = list(browser.find(PROFILE_FOLLOWERS_ELEMENTS))
                 last_follower = follower_elems[-1]
                 username_last_check = last_follower.get_attribute("title")
                 while follower_elems:
                     # Scroll down
-                    script = "document.querySelector(\".isgrP\").scrollTo(0, document.querySelector(" \
-                             "\".isgrP\").scrollHeight); "
-                    self.browser.driver.execute_script(script)
+                    self.browser.driver.execute_script(FOLLOWERS_SCROLL_DOWN)
                     sleep(0.6)
 
-                    # Get last username
-                    last_profile = browser.find_one(".wo9IH:last-child .enpQJ a")
+                    # Get last follower
                     try:
-                        current_username = last_profile.get_attribute("title")
+                        last_follower = browser.find_one(FOLLOWERS_LAST_PROFILE)
+                        current_username = last_follower.get_attribute("title")
                     except AttributeError:
                         break
 
@@ -166,27 +149,47 @@ class InsCrawler(Logging):
                     # Save last username of list
                     username_last_check = current_username
 
-                follower_elems = list(browser.find(follower_elems_css_selector, waittime=1))
-                followers = list([ele.get_attribute("title") for ele in follower_elems])
+                follower_elems = list(browser.find(PROFILE_FOLLOWERS_ELEMENTS, waittime=1))
+                followers_username: List[str] = list([ele.get_attribute("title") for ele in follower_elems])
+                followers: List[Profile] = [get_or_create_profile(username) for username in followers_username]
 
                 close_btn = browser.find_one("button.wpO6b")
                 close_btn.click()
             except:
                 print('Private profile')
 
-        return_obj = {
-            "name": name,
-            "desc": desc,
-            "photo_url": photo,
-            "post_num": post_num,
-            "follower_num": follower_num,
-            "following_num": following_num
-        }
+        return Profile(username=username, name=name, description=description, n_followers=follower_num,
+                       n_following=following_num, n_posts=post_num, followers=followers, photo_url=photo)
 
-        if followers is not None:
-            return_obj['followers'] = followers
+    def get_user_statistics(self, statistics) -> (int, int, int):
+        post_num: int = int(statistics[0].text.replace(",", ""))
+        follower_num: int = int(statistics[1].get_attribute("title").replace(",", ""))
+        following_num: int = int(statistics[2].text.replace(",", ""))
+        return post_num, follower_num, following_num
 
-        return return_obj
+    def __get_photo_url(self):
+        try:
+            photo = self.browser.find_one(PROFILE_PUBLIC_ACCOUNT_PHOTO).get_attribute("src")
+        except AttributeError:
+            try:
+                photo = self.browser.find_one(PROFILE_PRIVATE_ACCOUNT_PHOTO).get_attribute("src")  # Private profile
+            except AttributeError:
+                photo = ''
+        return photo
+
+    def __get_profile_description(self):
+        try:
+            desc = self.browser.find_one(PROFILE_DESCRIPTION).text
+        except AttributeError:
+            desc = ''
+        return desc
+
+    def __get_profile_name(self):
+        try:
+            name = self.browser.find_one(PROFILE_NAME).text
+        except AttributeError:
+            name = ''
+        return name
 
     def get_user_profile_from_script_shared_data(self, username):
         browser = self.browser
