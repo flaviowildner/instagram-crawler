@@ -20,6 +20,5 @@ def reset_db():
     LikeOnCommentEntity.create_table()
     FollowingEntity.create_table()
 
-
 # Uncomment to re-create tables
-reset_db()
+# reset_db()

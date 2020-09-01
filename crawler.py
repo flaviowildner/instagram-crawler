@@ -5,16 +5,15 @@ import argparse
 import json
 import logging
 import sys
-from datetime import datetime
 from io import open
 from typing import List
 
 from inscrawler import InsCrawler
 from inscrawler.model.post import Post
 from inscrawler.model.profile import Profile
-from inscrawler.persist import Persist
 from inscrawler.persistence.data.post_data import save_post
-from inscrawler.persistence.data.profile_data import get_or_create_profile, create_or_update_profile
+from inscrawler.persistence.data.profile_data import get_or_create_profile, create_or_update_profile, \
+    get_profile_to_crawl
 from inscrawler.settings import override_settings
 from inscrawler.settings import prepare_override_settings
 
@@ -130,36 +129,14 @@ if __name__ == "__main__":
     elif args.mode == "crawler":
         ins_crawler = InsCrawler(has_screen=args.debug)
         ins_crawler.login()
-        persist = Persist()
+
         while True:
-            profile_username_list = persist.get_profiles_to_crawl(
-                {"list_size": 10, "sql_mode": "visited"})
-            print(profile_username_list)
-            for username in profile_username_list:
-                profile = ins_crawler.get_user_profile(username, True)
-                profile['capture_time'] = int(datetime.now().timestamp())
-                profile["username"] = username
+            profiles_to_crawl: List[Profile] = get_profile_to_crawl(10)
+            for profile_to_crawl in profiles_to_crawl:
+                profile = ins_crawler.get_user_profile(profile_to_crawl.username, True)
+                create_or_update_profile(profile)
 
-                id_profile = persist.getUserIdByUsername(username)
-                if id_profile is None:
-                    logger.error('The profile of specified username does not exist')
-                    raise Exception('The profile of specified username does not exist')
-
-                profile['id'] = id_profile
-                persist.updateProfile(profile)
-
-                # Add follower list to datebase
-                if 'followers' in profile.keys():
-                    missing_profile_usernames = persist.getMissingProfiles(
-                        profile['followers'])
-                    for missed_username in missing_profile_usernames:
-                        persist.addProfile(missed_username)
-
-                    persist.persistFollowing(profile)
-
-                get_post_full(username, None, args.debug, ins_crawler)
-
-        print('Updated')
+                get_post_full(profile.username, profile.n_posts, args.debug, ins_crawler)
 
     else:
         usage()

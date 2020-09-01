@@ -29,7 +29,6 @@ from .fetch import fetch_likes_plays
 from .model.post import Post
 from .model.profile import Profile
 from .persistence.data.profile_data import get_or_create_profile
-from .utils import instagram_int
 from .utils import randmized_sleep
 from .utils import retry
 
@@ -153,9 +152,9 @@ class InsCrawler(Logging):
                 followers_username: List[str] = list([ele.get_attribute("title") for ele in follower_elems])
                 followers: List[Profile] = [get_or_create_profile(username) for username in followers_username]
 
-                close_btn = browser.find_one("button.wpO6b")
+                close_btn = browser.find_one(".WaOAr button.wpO6b")
                 close_btn.click()
-            except:
+            except Exception as e:
                 print('Private profile')
 
         return Profile(username=username, name=name, description=description, n_followers=follower_num,
@@ -214,11 +213,6 @@ class InsCrawler(Logging):
         }
 
     def get_user_posts(self, username, number=None, detail=False):
-        user_profile = self.get_user_profile(username)
-        print(user_profile)
-        if not number:
-            number = instagram_int(user_profile["post_num"])
-
         self._dismiss_login_prompt()
 
         if detail:

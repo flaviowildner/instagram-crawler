@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import List
 
 from inscrawler.model.profile import Profile
 from inscrawler.persistence.data.following_data import create_or_update_following
@@ -28,6 +29,13 @@ def create_or_update_profile(profile: Profile):
 def get_or_create_profile(username: str) -> Profile:
     profile_entity: ProfileEntity = ProfileEntity.get_or_create(username=username)[0]
     return from_entity(profile_entity)
+
+
+def get_profile_to_crawl(n_profile: int) -> List[Profile]:
+    profile_entity_list: List[ProfileEntity] = ProfileEntity.select().order_by(ProfileEntity.last_visit.asc()).limit(
+        n_profile)
+
+    return [from_entity(profile) for profile in profile_entity_list]
 
 
 def to_entity(profile: Profile) -> ProfileEntity:
