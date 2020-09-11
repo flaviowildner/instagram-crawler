@@ -14,7 +14,7 @@ from inscrawler.model.profile import Profile
 from inscrawler.persistence.data.post_data import save_post
 from inscrawler.persistence.data.profile_data import get_or_create_profile, create_or_update_profile, \
     get_profile_to_crawl
-from inscrawler.settings import override_settings
+from inscrawler.settings import override_settings, settings
 from inscrawler.settings import prepare_override_settings
 
 
@@ -127,6 +127,12 @@ if __name__ == "__main__":
         #         args.tag, args.number or 100, args.debug), args.output
         # )
     elif args.mode == "crawler":
+        settings = settings()
+        setattr(settings, 'fetch_comments', True)
+        setattr(settings, 'fetch_likers', True)
+
+        override_settings(settings)
+
         ins_crawler = InsCrawler(has_screen=args.debug)
         ins_crawler.login()
 

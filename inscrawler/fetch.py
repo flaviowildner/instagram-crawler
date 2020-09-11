@@ -172,8 +172,8 @@ def fetch_comments(browser, post: Post):
         # author = browser.find_one(".FPmhX", els_comment).text
         comment_obj.author = get_or_create_profile(author)
 
+        comment_obj.likers = list()
         if settings.fetch_likers:
-            likers_list = []
             likers_btn = browser.find_one('._7UhW9 button', els_comment)
             if ('like' in likers_btn.text or 'curtida' in likers_btn.text):
                 likers_btn.click()
