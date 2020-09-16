@@ -116,6 +116,7 @@ class InsCrawler(Logging):
         post_num, follower_num, following_num = self.get_user_statistics(statistics_elem)
 
         followers = None
+        followings = None
         if follow_list_enabled:
             follower_btn = follower_elem
             follower_btn.click()
@@ -157,13 +158,57 @@ class InsCrawler(Logging):
             except Exception as e:
                 print('Private profile')
 
+            statistics_elem = self.browser.find(PROFILE_STATISTICS)
+
+            following_elem = statistics_elem[2]
+            following_btn = following_elem
+            following_btn.click()
+
+            try:
+                following_elems = list(browser.find(PROFILE_FOLLOWERS_ELEMENTS, waittime=0.6))
+
+                following_elems[-1].location_once_scrolled_into_view
+                sleep(0.6)
+
+                following_elems = list(browser.find(PROFILE_FOLLOWERS_ELEMENTS))
+                last_followed = following_elems[-1]
+                username_last_check = last_followed.get_attribute("title")
+                while following_elems:
+                    # Scroll down
+                    self.browser.driver.execute_script(FOLLOWERS_SCROLL_DOWN)
+                    sleep(0.6)
+
+                    # Get last followed
+                    try:
+                        last_followed = browser.find_one(FOLLOWERS_LAST_PROFILE)
+                        current_username = last_followed.get_attribute("title")
+                    except AttributeError:
+                        break
+
+                    # Check if the last username of current iteration is the same as the previous iteration
+                    if current_username == username_last_check:
+                        break
+
+                    # Save last username of list
+                    username_last_check = current_username
+
+                following_elems = list(browser.find(PROFILE_FOLLOWERS_ELEMENTS, waittime=1))
+                followeds_username: List[str] = list([ele.get_attribute("title") for ele in following_elems])
+
+                followings: List[Profile] = [get_or_create_profile(username) for username in followeds_username]
+
+                close_btn = browser.find_one(".WaOAr button.wpO6b")
+                close_btn.click()
+            except Exception as e:
+                print('Private profile')
+
         return Profile(username=username, name=name, description=description, n_followers=follower_num,
-                       n_following=following_num, n_posts=post_num, followers=followers, photo_url=photo)
+                       n_following=following_num, n_posts=post_num, followers=followers, followings=followings, photo_url=photo)
 
     def get_user_statistics(self, statistics) -> (int, int, int):
-        post_num: int = int(statistics[0].text.replace(",", ""))
-        follower_num: int = int(statistics[1].get_attribute("title").replace(",", ""))
-        following_num: int = int(statistics[2].text.replace(",", ""))
+        post_num: int = int(statistics[0].text.replace(",", "").replace(".", ""))
+        follower_num: int = int(statistics[1].get_attribute("title").replace(",", "").replace(".", ""))
+        following_num: int = int(statistics[2].text.replace(",", "").replace(".", ""))
         return post_num, follower_num, following_num
 
     def __get_photo_url(self):

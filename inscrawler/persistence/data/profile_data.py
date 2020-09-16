@@ -25,6 +25,9 @@ def create_or_update_profile(profile: Profile):
     for follower in profile.followers:
         create_or_update_following(follower, profile)
 
+    for follower in profile.followings:
+        create_or_update_following(profile, follower)
+
 
 def get_or_create_profile(username: str) -> Profile:
     profile_entity: ProfileEntity = ProfileEntity.get_or_create(username=username)[0]

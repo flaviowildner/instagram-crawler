@@ -10,6 +10,7 @@ class Profile:
     n_following: Optional[int]
     n_posts: Optional[int]
     followers: Optional[List['Profile']]
+    followings: Optional[List['Profile']]
     photo_url: Optional[str]
     last_visit: Optional[int]
     created_at: Optional[int]
@@ -24,6 +25,7 @@ class Profile:
                  n_following: Optional[int] = None,
                  n_posts: Optional[int] = None,
                  followers: Optional[List['Profile']] = None,
+                 followings: Optional[List['Profile']] = None,
                  photo_url: Optional[str] = None,
                  last_visit: Optional[int] = None,
                  created_at: Optional[int] = None,
@@ -36,6 +38,7 @@ class Profile:
         self.n_followers = n_followers
         self.n_following = n_following
         self.followers = followers
+        self.followings = followings
         self.n_posts = n_posts
         self.photo_url = photo_url
         self.last_visit = last_visit
