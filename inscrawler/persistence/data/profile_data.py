@@ -1,6 +1,8 @@
 from datetime import datetime
 from typing import List
 
+from peewee import fn
+
 from inscrawler.model.profile import Profile
 from inscrawler.persistence.data.following_data import create_or_update_following
 from inscrawler.persistence.entity.profile_entity import ProfileEntity
@@ -34,9 +36,11 @@ def get_or_create_profile(username: str) -> Profile:
     return from_entity(profile_entity)
 
 
+# Let A be a sorted list of profiles(by the last_visit column), sort a random number between 1 and the number of
+# elements of the profile table, and then select the n_profile elements below the nth + 1 record
 def get_profile_to_crawl(n_profile: int) -> List[Profile]:
     profile_entity_list: List[ProfileEntity] = ProfileEntity.select().order_by(ProfileEntity.last_visit.asc()).limit(
-        n_profile)
+        n_profile).offset(fn.FLOOR(fn.RANDOM() * ProfileEntity.select().count()) + 1)
 
     return [from_entity(profile) for profile in profile_entity_list]
 
