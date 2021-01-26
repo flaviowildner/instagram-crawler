@@ -99,28 +99,30 @@ def fetch_likes_plays(browser, dict_post):
 def fetch_likers(browser, post: Post):
     if not settings.fetch_likers:
         return
-    like_info_btn = browser.find_one(".EDfFK .sqdOP._8A5w5")
-    like_info_btn.click()
 
-    likers = {}
-    liker_elems_css_selector = ".Igw0E ._7UhW9.xLCgt a"
-    likers_elems = list(browser.find(liker_elems_css_selector))
-    last_liker = None
-    while likers_elems:
-        for ele in likers_elems:
-            likers[ele.get_attribute("href")] = ele.get_attribute("title")
+    like_info_btn = browser.find_one(".EDfFK .sqdOP._8A5w5 span")
+    if like_info_btn is not None:
+        like_info_btn.click()
 
-        if last_liker == likers_elems[-1]:
-            break
-
-        last_liker = likers_elems[-1]
-        last_liker.location_once_scrolled_into_view
-        sleep(0.6)
+        likers = {}
+        liker_elems_css_selector = ".Igw0E ._7UhW9.xLCgt a"
         likers_elems = list(browser.find(liker_elems_css_selector))
+        last_liker = None
+        while likers_elems:
+            for ele in likers_elems:
+                likers[ele.get_attribute("href")] = ele.get_attribute("title")
 
-    post.likers = list([get_or_create_profile(username) for username in likers.values()])
-    close_btn = browser.find_one(".WaOAr button")
-    close_btn.click()
+            if last_liker == likers_elems[-1]:
+                break
+
+            last_liker = likers_elems[-1]
+            last_liker.location_once_scrolled_into_view
+            sleep(0.6)
+            likers_elems = list(browser.find(liker_elems_css_selector))
+
+        post.likers = list([get_or_create_profile(username) for username in likers.values()])
+        close_btn = browser.find_one(".WaOAr button")
+        close_btn.click()
 
 
 def fetch_caption(browser, post: Post):

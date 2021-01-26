@@ -40,7 +40,7 @@ def get_or_create_profile(username: str) -> Profile:
 # elements of the profile table, and then select the n_profile elements below the nth + 1 record
 def get_profile_to_crawl(n_profile: int) -> List[Profile]:
     profile_entity_list: List[ProfileEntity] = ProfileEntity.select().order_by(ProfileEntity.last_visit.asc()).limit(
-        n_profile).offset(fn.FLOOR(fn.RANDOM() * ProfileEntity.select().count()) + 1)
+        n_profile).offset(fn.FLOOR(fn.RANDOM() * ProfileEntity.select().count()))
 
     return [from_entity(profile) for profile in profile_entity_list]
 

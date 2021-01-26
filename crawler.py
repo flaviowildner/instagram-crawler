@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+import logging
+
 import argparse
 import json
 import logging
@@ -82,6 +84,10 @@ def get_post_full(username, number=None, debug=False, ins_crawler=None):
 
 
 if __name__ == "__main__":
+    logger = logging.getLogger('peewee')
+    logger.addHandler(logging.StreamHandler())
+    logger.setLevel(logging.DEBUG)
+
     parser = argparse.ArgumentParser(
         description="Instagram Crawler", usage=usage())
     parser.add_argument(

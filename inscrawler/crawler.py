@@ -115,8 +115,8 @@ class InsCrawler(Logging):
 
         post_num, follower_num, following_num = self.get_user_statistics(statistics_elem)
 
-        followers = None
-        followings = None
+        followers = []
+        followings = []
         if follow_list_enabled:
             follower_btn = follower_elem
             follower_btn.click()
@@ -149,14 +149,15 @@ class InsCrawler(Logging):
                     # Save last username of list
                     username_last_check = current_username
 
-                follower_elems = list(browser.find(PROFILE_FOLLOWERS_ELEMENTS, waittime=1))
+                follower_elems = list(browser.find(PROFILE_FOLLOWERS_ELEMENTS, waittime=1) or []) # avoid assign None to list (which causes an exception)
                 followers_username: List[str] = list([ele.get_attribute("title") for ele in follower_elems])
                 followers: List[Profile] = [get_or_create_profile(username) for username in followers_username]
-
-                close_btn = browser.find_one(".WaOAr button.wpO6b")
-                close_btn.click()
             except Exception as e:
                 print('Private profile')
+            finally:
+                close_btn = browser.find_one(".WaOAr button.wpO6b")
+                if close_btn is not None:
+                    close_btn.click()
 
             statistics_elem = self.browser.find(PROFILE_STATISTICS)
 
